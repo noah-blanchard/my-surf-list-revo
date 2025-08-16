@@ -18,8 +18,8 @@ export async function signUpAction(email: string, password: string, displayName:
     try {
         await serverSignUp(parsed.data);
         return { ok: true, message: "Account created successfully. Please check your email to confirm." };
-    } catch (e: any) {
-        return { ok: false, message: e.message ?? "Failed to sign up" };
+    } catch (e) {
+        return { ok: false, message: (e as Error).message ?? "Failed to sign up" };
     }
 }
 
@@ -34,8 +34,8 @@ export async function signInAction(email: string, password: string) {
     try {
         await serverSignIn(parsed.data);
         return { ok: true, message: "Signed in successfully" };
-    } catch (e: any) {
-        return { ok: false, message: e.message ?? "Failed to sign in" };
+    } catch (e) {
+        return { ok: false, message: (e as Error).message ?? "Failed to sign in" };
     }
 }
 

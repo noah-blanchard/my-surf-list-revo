@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import type { Database } from "@/types/supabase";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { steam64ToSteam2 } from "@/utils/steam";
@@ -14,7 +13,7 @@ type KsfRecord = { mapName: string; rank: string | number; points: number; date:
 
 function sseEncoder(controller: ReadableStreamDefaultController) {
     const enc = new TextEncoder();
-    return (event: string, data: any) => {
+    return (event: string, data: unknown) => {
         controller.enqueue(enc.encode(`event:${event}\n`));
         controller.enqueue(enc.encode(`data:${JSON.stringify(data)}\n\n`));
     };
@@ -33,7 +32,7 @@ async function fetchJSON(url: string, timeoutMs = 10000) {
 }
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
     const supabase = await createServerSupabase();
 
     // 1) Session
@@ -149,8 +148,8 @@ export async function GET(_req: NextRequest) {
                 });
 
                 controller.close();
-            } catch (e: any) {
-                const msg = e?.message ?? "Sync failed";
+            } catch (e: unknown) {
+                const msg = (e as Error)?.message ?? "Sync failed";
                 controller.enqueue(
                     new TextEncoder().encode(
                         `event:progress\ndata:${JSON.stringify({ phase: "error", pct: 100, message: msg })}\n\n`

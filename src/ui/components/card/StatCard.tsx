@@ -19,7 +19,7 @@ export function GlowStatCard({
     // defaults “soft” pour les cards
     glowSize = 500,
     glowOpacity = 0.15,
-    glowGradient = "aurora",
+    glowGradient = "twilight",
     p = "md",
     radius = "md",
     withBorder = true,
@@ -55,7 +55,6 @@ export function GlowStatCardSkeleton() {
             withBorder
             glowSize={300}
             glowOpacity={0.1}
-            glowGradient="aurora"
         >
             <Group align="center" gap="sm" style={{ position: "relative", zIndex: 1 }}>
                 <Skeleton circle height={32} width={32} />

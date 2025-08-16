@@ -40,7 +40,7 @@ export function useKsfSync() {
             setLabel("connection lost");
             es.close();
         };
-    }, [running]);
+    }, [running, qc]);
 
     const cancel = React.useCallback(() => {
         esRef.current?.close();

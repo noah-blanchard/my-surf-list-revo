@@ -17,8 +17,8 @@ export type GlowSectionProps = PaperProps & {
 export function GlowSection({
   title,
   children,
-  glowGradient = "aurora",
-  glowSize = 500,
+  glowGradient = "twilight",
+  glowSize = 1200,
   glowOpacity = 0.10,
   disableGlow = false,
   popOut = true, 
@@ -36,11 +36,11 @@ export function GlowSection({
     setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
-  const handleEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleEnter = () => {
     setHovered(true);
   };
 
-  const handleLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleLeave = () => {
     setHovered(false);
   };
 

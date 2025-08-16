@@ -5,6 +5,7 @@ import { GetByStatusQuery, GetByStatusResponse } from "@/features/user-maps/vali
 
 type UMRow = Database["public"]["Tables"]["user_maps"]["Row"];
 type MapRow = Database["public"]["Tables"]["maps"]["Row"];
+type MapRowReturn = Pick<MapRow, "id" | "name" | "tier" | "is_linear"> & {updated_at: string} 
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -45,11 +46,11 @@ export async function GET(req: NextRequest) {
   }
 
   const groups = {
-    Completed: [] as any[],
-    Ongoing: [] as any[],
-    "On hold": [] as any[],
-    Planned: [] as any[],
-    Dropped: [] as any[],
+    Completed: [] as Array<MapRowReturn>,
+    Ongoing: [] as Array<MapRowReturn>,
+    "On hold": [] as Array<MapRowReturn>,
+    Planned: [] as Array<MapRowReturn>,
+    Dropped: [] as Array<MapRowReturn>,
   };
 
   for (const row of (data ?? []) as (Pick<UMRow, "status" | "completed_at" | "updated_at"> & { maps: Pick<MapRow, "id" | "name" | "tier" | "is_linear"> | null })[]) {
@@ -59,10 +60,9 @@ export async function GET(req: NextRequest) {
       name: row.maps.name as string,
       tier: Number(row.maps.tier),
       is_linear: !!row.maps.is_linear,
-      completed_at: row.completed_at ?? null,
       updated_at: row.updated_at ?? undefined,
     };
-    (groups as any)[row.status]?.push(item);
+    (groups)[row.status]?.push(item);
   }
 
   const counts = {

@@ -16,6 +16,10 @@ import {
   addOngoingAction,
   addCompletedAction,
 } from "@/features/user-maps/actions";
+import { Database } from "@/types/supabase";
+
+type MapRow = Database["public"]["Tables"]["maps"]["Row"];
+
 
 export default function SearchMapsView() {
   const [page, setPage] = React.useState(1);
@@ -50,7 +54,7 @@ export default function SearchMapsView() {
       const json = await res.json();
       if (!res.ok || json?.ok === false) throw new Error(json?.message || `HTTP ${res.status}`);
       return json.data as {
-        items: any[];
+        items: MapRow[];
         page: number;
         pageSize: number;
         total: number;

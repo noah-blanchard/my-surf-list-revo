@@ -20,8 +20,8 @@ export type GlowButtonProps = ButtonProps &
 export const GlowButton = React.forwardRef<HTMLButtonElement, GlowButtonProps>(
     (
         {
-            glowGradient = "aurora",
-            glowSize = 260,
+            glowGradient = "steel",
+            glowSize = 120,
             glowOpacity = 0.25,
             disableGlow = false,
             children,

@@ -15,7 +15,7 @@ export function MyListView({ userId }: { userId: string }) {
     queryKey: ["api", "user-maps", "by-status", userId],
     queryFn: () =>
       fetchUserMapsByStatus(userId).then((r) => {
-        if (!r.ok) throw new Error((r as any).message);
+        if (!r.ok) throw new Error(r.message);
         return r;
       }),
     staleTime: 30_000,

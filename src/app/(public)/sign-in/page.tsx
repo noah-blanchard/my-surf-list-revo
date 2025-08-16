@@ -1,4 +1,3 @@
-import { AuthForm } from "@/features/auth/components/AuthForm";
 import { signInAction } from "@/features/auth/actions";
 import { SignInForm } from "@/features/auth/components/SignInForm";
 

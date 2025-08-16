@@ -3,7 +3,6 @@ import { Stack } from "@mantine/core";
 import { GlowSection } from "@/ui/components/section/GlowSection";
 import { UserStatsGridView } from "@/features/stats/components/UserStatsGridView";
 import { getSession } from "@/lib/auth";
-import { KsfSyncPanel } from "@/features/ksf/components/KsfSyncPanel";
 import { KsfSyncButton } from "@/features/ksf/components/KsfSyncButton";
 
 export default async function DashboardPage() {

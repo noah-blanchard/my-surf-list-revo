@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
     Paper,
-    Stack,
     TextInput,
     PasswordInput,
     Title,
@@ -15,7 +14,7 @@ import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
 
-type ActionResult = { ok?: false; message?: string } | any;
+type ActionResult = { ok?: false; message?: string };
 
 export function AuthForm({
     title,
@@ -55,8 +54,8 @@ export function AuthForm({
                 return;
             }
             onSuccess?.();
-        } catch (e: any) {
-            const msg = e?.message ?? "Erreur inattendue";
+        } catch (e) {
+            const msg = (e as Error)?.message ?? "Erreur inattendue";
             setMessage(msg);
             notifications.show({ title: "Erreur", message: msg });
         } finally {

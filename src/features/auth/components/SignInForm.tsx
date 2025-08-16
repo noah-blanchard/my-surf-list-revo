@@ -8,7 +8,7 @@ import { useForm } from "@mantine/form";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
 
-type ActionResult = { ok?: false; message?: string } | any;
+type ActionResult = { ok?: boolean; message?: string };
 
 export function SignInForm({
     action,

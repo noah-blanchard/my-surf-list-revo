@@ -1,0 +1,481 @@
+﻿diff --git a/eslint.config.mjs b/eslint.config.mjs
+index 8c3e76b..88977ce 100644
+--- a/eslint.config.mjs
++++ b/eslint.config.mjs
+@@ -13,11 +13,7 @@ const eslintConfig = [
+   ...compat.extends("next/core-web-vitals", "next/typescript"),
+   {
+     rules: {
+-      // D├®sactive compl├¿tement
+-      "@typescript-eslint/no-explicit-any": "off",
+-
+-      // ou bien juste en warning :
+-      // "@typescript-eslint/no-explicit-any": "warn",
++      "@typescript-eslint/no-explicit-any": "warn",
+     },
+   },
+ ];
+diff --git a/src/app/(protected)/dashboard/page.tsx b/src/app/(protected)/dashboard/page.tsx
+index 06373ef..fb4dd21 100644
+--- a/src/app/(protected)/dashboard/page.tsx
++++ b/src/app/(protected)/dashboard/page.tsx
+@@ -3,7 +3,6 @@ import { Stack } from "@mantine/core";
+ import { GlowSection } from "@/ui/components/section/GlowSection";
+ import { UserStatsGridView } from "@/features/stats/components/UserStatsGridView";
+ import { getSession } from "@/lib/auth";
+-import { KsfSyncPanel } from "@/features/ksf/components/KsfSyncPanel";
+ import { KsfSyncButton } from "@/features/ksf/components/KsfSyncButton";
+ 
+ export default async function DashboardPage() {
+diff --git a/src/app/(public)/layout.tsx b/src/app/(public)/layout.tsx
+index f9d8410..b786808 100644
+--- a/src/app/(public)/layout.tsx
++++ b/src/app/(public)/layout.tsx
+@@ -1,5 +1,5 @@
++import { supabaseBrowser } from "@/lib/supabase/client";
+ import { Box } from "@mantine/core";
+-import { createServerSupabase } from "@/lib/supabase/server";
+ import { redirect } from "next/navigation";
+ 
+ export default async function PublicLayout({
+@@ -7,10 +7,9 @@ export default async function PublicLayout({
+ }: {
+     children: React.ReactNode;
+ }) {
+-    const supabase = await createServerSupabase();
+     const {
+         data: { session },
+-    } = await supabase.auth.getSession();
++    } = await supabaseBrowser.auth.getSession();
+     if (session?.user) redirect("/dashboard");
+ 
+     return (
+diff --git a/src/app/(public)/sign-in/page.tsx b/src/app/(public)/sign-in/page.tsx
+index bdaf6ee..0f7feb9 100644
+--- a/src/app/(public)/sign-in/page.tsx
++++ b/src/app/(public)/sign-in/page.tsx
+@@ -1,4 +1,3 @@
+-import { AuthForm } from "@/features/auth/components/AuthForm";
+ import { signInAction } from "@/features/auth/actions";
+ import { SignInForm } from "@/features/auth/components/SignInForm";
+ 
+diff --git a/src/app/(public)/sign-up/page.tsx b/src/app/(public)/sign-up/page.tsx
+index 805627f..2e29775 100644
+--- a/src/app/(public)/sign-up/page.tsx
++++ b/src/app/(public)/sign-up/page.tsx
+@@ -1,4 +1,3 @@
+-import { AuthForm } from "@/features/auth/components/AuthForm";
+ import { signUpAction } from "@/features/auth/actions";
+ import { SignUpForm } from "@/features/auth/components/SignUpForm";
+ 
+diff --git a/src/app/api/ksf/sync/route.ts b/src/app/api/ksf/sync/route.ts
+index cba4bf5..1e56c5e 100644
+--- a/src/app/api/ksf/sync/route.ts
++++ b/src/app/api/ksf/sync/route.ts
+@@ -1,4 +1,3 @@
+-import { NextRequest } from "next/server";
+ import type { Database } from "@/types/supabase";
+ import { createServerSupabase } from "@/lib/supabase/server";
+ import { steam64ToSteam2 } from "@/utils/steam";
+@@ -14,7 +13,7 @@ type KsfRecord = { mapName: string; rank: string | number; points: number; date:
+ 
+ function sseEncoder(controller: ReadableStreamDefaultController) {
+     const enc = new TextEncoder();
+-    return (event: string, data: any) => {
++    return (event: string, data: unknown) => {
+         controller.enqueue(enc.encode(`event:${event}\n`));
+         controller.enqueue(enc.encode(`data:${JSON.stringify(data)}\n\n`));
+     };
+@@ -33,7 +32,7 @@ async function fetchJSON(url: string, timeoutMs = 10000) {
+ }
+ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+ 
+-export async function GET(_req: NextRequest) {
++export async function GET() {
+     const supabase = await createServerSupabase();
+ 
+     // 1) Session
+@@ -149,8 +148,8 @@ export async function GET(_req: NextRequest) {
+                 });
+ 
+                 controller.close();
+-            } catch (e: any) {
+-                const msg = e?.message ?? "Sync failed";
++            } catch (e: unknown) {
++                const msg = (e as Error)?.message ?? "Sync failed";
+                 controller.enqueue(
+                     new TextEncoder().encode(
+                         `event:progress\ndata:${JSON.stringify({ phase: "error", pct: 100, message: msg })}\n\n`
+diff --git a/src/app/api/maps/getMaps/route.ts b/src/app/api/maps/getMaps/route.ts
+index 16d3c76..192d1b3 100644
+--- a/src/app/api/maps/getMaps/route.ts
++++ b/src/app/api/maps/getMaps/route.ts
+@@ -14,9 +14,9 @@ export async function GET(req: Request) {
+       pageSize: url.searchParams.get("pageSize"),
+       q: url.searchParams.get("q") || undefined,
+       tier: url.searchParams.get("tier") || undefined,
+-      isLinear: (url.searchParams.get("type") as any) || undefined, // type=all|true|false
+-      sort: (url.searchParams.get("sort") as any) || undefined,
+-      dir: (url.searchParams.get("dir") as any) || undefined,
++      isLinear: (url.searchParams.get("type")) || undefined, // type=all|true|false
++      sort: (url.searchParams.get("sort")) || undefined,
++      dir: (url.searchParams.get("dir")) || undefined,
+     });
+ 
+     if (!parsed.success) {
+@@ -45,7 +45,7 @@ export async function GET(req: Request) {
+       sort === "tier" ? "tier" :
+       "created_at";
+ 
+-    query = query.order(sortCol as any, { ascending: dir === "asc" });
++    query = query.order(sortCol, { ascending: dir === "asc" });
+ 
+     const { data: items, error, count } = await query.range(from, to);
+ 
+@@ -71,7 +71,7 @@ export async function GET(req: Request) {
+       },
+       { status: 200, headers: { "Cache-Control": "no-store" } }
+     );
+-  } catch (e: any) {
+-    return NextResponse.json({ ok: false, message: e?.message ?? "Server error" }, { status: 500 });
++  } catch (e) {
++    return NextResponse.json({ ok: false, message: (e as Error)?.message ?? "Server error" }, { status: 500 });
+   }
+ }
+diff --git a/src/app/api/stats/getStats/route.ts b/src/app/api/stats/getStats/route.ts
+index bef55cc..6090d97 100644
+--- a/src/app/api/stats/getStats/route.ts
++++ b/src/app/api/stats/getStats/route.ts
+@@ -52,7 +52,7 @@ export async function GET(req: Request) {
+     const safe = UserStatsSchema.parse(stats);
+ 
+     return NextResponse.json({ ok: true, data: safe }, { status: 200, headers: { "Cache-Control": "no-store" } });
+-  } catch (e: any) {
+-    return NextResponse.json({ ok: false, message: e?.message ?? "Server error" }, { status: 500 });
++  } catch (e) {
++    return NextResponse.json({ ok: false, message: (e as Error)?.message ?? "Server error" }, { status: 500 });
+   }
+ }
+diff --git a/src/app/api/user-maps/getByStatus/route.ts b/src/app/api/user-maps/getByStatus/route.ts
+index e4f0d72..99e5ebd 100644
+--- a/src/app/api/user-maps/getByStatus/route.ts
++++ b/src/app/api/user-maps/getByStatus/route.ts
+@@ -5,6 +5,7 @@ import { GetByStatusQuery, GetByStatusResponse } from "@/features/user-maps/vali
+ 
+ type UMRow = Database["public"]["Tables"]["user_maps"]["Row"];
+ type MapRow = Database["public"]["Tables"]["maps"]["Row"];
++type MapRowReturn = Pick<MapRow, "id" | "name" | "tier" | "is_linear"> & {updated_at: string} 
+ 
+ export async function GET(req: NextRequest) {
+   const url = new URL(req.url);
+@@ -45,11 +46,11 @@ export async function GET(req: NextRequest) {
+   }
+ 
+   const groups = {
+-    Completed: [] as any[],
+-    Ongoing: [] as any[],
+-    "On hold": [] as any[],
+-    Planned: [] as any[],
+-    Dropped: [] as any[],
++    Completed: [] as Array<MapRowReturn>,
++    Ongoing: [] as Array<MapRowReturn>,
++    "On hold": [] as Array<MapRowReturn>,
++    Planned: [] as Array<MapRowReturn>,
++    Dropped: [] as Array<MapRowReturn>,
+   };
+ 
+   for (const row of (data ?? []) as (Pick<UMRow, "status" | "completed_at" | "updated_at"> & { maps: Pick<MapRow, "id" | "name" | "tier" | "is_linear"> | null })[]) {
+@@ -59,10 +60,9 @@ export async function GET(req: NextRequest) {
+       name: row.maps.name as string,
+       tier: Number(row.maps.tier),
+       is_linear: !!row.maps.is_linear,
+-      completed_at: row.completed_at ?? null,
+       updated_at: row.updated_at ?? undefined,
+     };
+-    (groups as any)[row.status]?.push(item);
++    (groups)[row.status]?.push(item);
+   }
+ 
+   const counts = {
+diff --git a/src/constants/gradients/GlowGradients.ts b/src/constants/gradients/GlowGradients.ts
+index b10830f..39916ce 100644
+--- a/src/constants/gradients/GlowGradients.ts
++++ b/src/constants/gradients/GlowGradients.ts
+@@ -1,4 +1,3 @@
+-// Gradients r├®utilisables pour GlowButton (couleurs Mantine ou hex)
+ export type GlowGradient = { from: string; to: string };
+ 
+ export const GLOW_GRADIENTS = {
+diff --git a/src/features/auth/actions.ts b/src/features/auth/actions.ts
+index 9737da1..f91c68a 100644
+--- a/src/features/auth/actions.ts
++++ b/src/features/auth/actions.ts
+@@ -18,8 +18,8 @@ export async function signUpAction(email: string, password: string, displayName:
+     try {
+         await serverSignUp(parsed.data);
+         return { ok: true, message: "Account created successfully. Please check your email to confirm." };
+-    } catch (e: any) {
+-        return { ok: false, message: e.message ?? "Failed to sign up" };
++    } catch (e) {
++        return { ok: false, message: (e as Error).message ?? "Failed to sign up" };
+     }
+ }
+ 
+@@ -34,8 +34,8 @@ export async function signInAction(email: string, password: string) {
+     try {
+         await serverSignIn(parsed.data);
+         return { ok: true, message: "Signed in successfully" };
+-    } catch (e: any) {
+-        return { ok: false, message: e.message ?? "Failed to sign in" };
++    } catch (e) {
++        return { ok: false, message: (e as Error).message ?? "Failed to sign in" };
+     }
+ }
+ 
+diff --git a/src/features/auth/components/AuthForm.tsx b/src/features/auth/components/AuthForm.tsx
+index 8d9e1fc..72d0786 100644
+--- a/src/features/auth/components/AuthForm.tsx
++++ b/src/features/auth/components/AuthForm.tsx
+@@ -3,7 +3,6 @@
+ import * as React from "react";
+ import {
+     Paper,
+-    Stack,
+     TextInput,
+     PasswordInput,
+     Title,
+@@ -15,7 +14,7 @@ import { useForm } from "@mantine/form";
+ import { notifications } from "@mantine/notifications";
+ import { GlowButton } from "@/ui/components/buttons/GlowButton";
+ 
+-type ActionResult = { ok?: false; message?: string } | any;
++type ActionResult = { ok?: false; message?: string };
+ 
+ export function AuthForm({
+     title,
+@@ -55,8 +54,8 @@ export function AuthForm({
+                 return;
+             }
+             onSuccess?.();
+-        } catch (e: any) {
+-            const msg = e?.message ?? "Erreur inattendue";
++        } catch (e) {
++            const msg = (e as Error)?.message ?? "Erreur inattendue";
+             setMessage(msg);
+             notifications.show({ title: "Erreur", message: msg });
+         } finally {
+diff --git a/src/features/auth/components/LogoutButton.tsx b/src/features/auth/components/LogoutButton.tsx
+index 01d02fe..bccf399 100644
+--- a/src/features/auth/components/LogoutButton.tsx
++++ b/src/features/auth/components/LogoutButton.tsx
+@@ -1,7 +1,7 @@
+ import { useState } from "react";
+ import { GlowButton } from "@/ui/components/buttons/GlowButton";
+ import { signOutAction } from "../actions";
+-import { Modal, Button, Text } from "@mantine/core";
++import { Modal, Text } from "@mantine/core";
+ 
+ export function SignOutButton() {
+     const [opened, setOpened] = useState(false);
+diff --git a/src/features/auth/components/SignInForm.tsx b/src/features/auth/components/SignInForm.tsx
+index 3b2e051..946cfc2 100644
+--- a/src/features/auth/components/SignInForm.tsx
++++ b/src/features/auth/components/SignInForm.tsx
+@@ -8,7 +8,7 @@ import { useForm } from "@mantine/form";
+ import { IconAlertTriangle } from "@tabler/icons-react";
+ import { GlowButton } from "@/ui/components/buttons/GlowButton";
+ 
+-type ActionResult = { ok?: false; message?: string } | any;
++type ActionResult = { ok?: boolean; message?: string };
+ 
+ export function SignInForm({
+     action,
+diff --git a/src/features/ksf/api.ts b/src/features/ksf/api.ts
+index c89bf89..d9dcdc2 100644
+--- a/src/features/ksf/api.ts
++++ b/src/features/ksf/api.ts
+@@ -1,6 +1,6 @@
+ export type SyncProgress =
+-  | { phase: "fetch" | "resolve" | "upsert"; pct: number; message?: string; meta?: Record<string, any> }
+-  | { phase: "done"; pct: 100; message?: string; meta?: Record<string, any> }
++  | { phase: "fetch" | "resolve" | "upsert"; pct: number; message?: string; meta?: Record<string, unknown> }
++  | { phase: "done"; pct: 100; message?: string; meta?: Record<string, unknown> }
+   | { phase: "error"; pct: number; message: string };
+ 
+ export function startKsfSync(params: {
+diff --git a/src/features/ksf/components/KsfSyncPanel.tsx b/src/features/ksf/components/KsfSyncPanel.tsx
+index 8198260..8b02735 100644
+--- a/src/features/ksf/components/KsfSyncPanel.tsx
++++ b/src/features/ksf/components/KsfSyncPanel.tsx
+@@ -3,7 +3,7 @@ import * as React from "react";
+ import { Paper, Stack, Group, TextInput, SegmentedControl, Switch, Select } from "@mantine/core";
+ import { KsfSyncButton } from "./KsfSyncButton";
+ 
+-export function KsfSyncPanel({ userId, defaultSteam64 }: { userId: string; defaultSteam64?: string }) {
++export function KsfSyncPanel({ defaultSteam64 }: { userId: string; defaultSteam64?: string }) {
+ 
+     const [steam64, setSteam64] = React.useState(defaultSteam64 ?? "");
+     const [status, setStatus] = React.useState<"Planned" | "On hold" | "Dropped" | "Completed" | "Ongoing">("Completed");
+diff --git a/src/features/ksf/components/useKsfSync.ts b/src/features/ksf/components/useKsfSync.ts
+index 6908fd4..8603520 100644
+--- a/src/features/ksf/components/useKsfSync.ts
++++ b/src/features/ksf/components/useKsfSync.ts
+@@ -40,7 +40,7 @@ export function useKsfSync() {
+             setLabel("connection lost");
+             es.close();
+         };
+-    }, [running]);
++    }, [running, qc]);
+ 
+     const cancel = React.useCallback(() => {
+         esRef.current?.close();
+diff --git a/src/features/maps/actions.ts b/src/features/maps/actions.ts
+index bbcc900..2742483 100644
+--- a/src/features/maps/actions.ts
++++ b/src/features/maps/actions.ts
+@@ -8,7 +8,7 @@ export async function getMapsAction(page: number, opts?: { pageSize?: number })
+     const res = await fetchMaps(page, { pageSize: opts?.pageSize });
+     if (res.ok) return { ok: true as const, data: res.data };
+     return { ok: false as const, message: res.message };
+-  } catch (e: any) {
+-    return { ok: false as const, message: e?.message ?? "Failed to load maps" };
++  } catch (e) {
++    return { ok: false as const, message: (e as Error)?.message ?? "Failed to load maps" };
+   }
+ }
+diff --git a/src/features/maps/components/SearchMapsView.tsx b/src/features/maps/components/SearchMapsView.tsx
+index 362be60..c567566 100644
+--- a/src/features/maps/components/SearchMapsView.tsx
++++ b/src/features/maps/components/SearchMapsView.tsx
+@@ -16,6 +16,10 @@ import {
+   addOngoingAction,
+   addCompletedAction,
+ } from "@/features/user-maps/actions";
++import { Database } from "@/types/supabase";
++
++type MapRow = Database["public"]["Tables"]["maps"]["Row"];
++
+ 
+ export default function SearchMapsView() {
+   const [page, setPage] = React.useState(1);
+@@ -50,7 +54,7 @@ export default function SearchMapsView() {
+       const json = await res.json();
+       if (!res.ok || json?.ok === false) throw new Error(json?.message || `HTTP ${res.status}`);
+       return json.data as {
+-        items: any[];
++        items: MapRow[];
+         page: number;
+         pageSize: number;
+         total: number;
+diff --git a/src/features/profiles/actions.ts b/src/features/profiles/actions.ts
+index 7c0b2e2..3d64988 100644
+--- a/src/features/profiles/actions.ts
++++ b/src/features/profiles/actions.ts
+@@ -8,7 +8,7 @@ export async function getMeAction() {
+         const data = await fetchMe(); // appelle /api/me
+         // data = { user: User|null, profile: ProfileRow|null }
+         return { ok: true as const, data };
+-    } catch (e: any) {
+-        return { ok: false as const, message: e?.message ?? "Failed to load profile" };
++    } catch (e) {
++        return { ok: false as const, message: (e as Error)?.message ?? "Failed to load profile" };
+     }
+ }
+diff --git a/src/features/profiles/api.ts b/src/features/profiles/api.ts
+index df8e10a..03e51be 100644
+--- a/src/features/profiles/api.ts
++++ b/src/features/profiles/api.ts
+@@ -1,7 +1,6 @@
+ "use client";
+ import { z } from "zod";
+ import type { Database } from "@/types/supabase";
+-import type { User } from "@supabase/supabase-js";
+ 
+ export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+ 
+diff --git a/src/features/stats/actions.ts b/src/features/stats/actions.ts
+index 13efc57..26eb6b6 100644
+--- a/src/features/stats/actions.ts
++++ b/src/features/stats/actions.ts
+@@ -7,7 +7,7 @@ export async function getUserStatsAction(userId: string) {
+     const res = await fetchUserStats(userId);
+     if (res.ok) return { ok: true as const, data: res.data };
+     return { ok: false as const, message: res.message };
+-  } catch (e: any) {
+-    return { ok: false as const, message: e?.message ?? "Failed to load stats" };
++  } catch (e) {
++    return { ok: false as const, message: (e as Error)?.message ?? "Failed to load stats" };
+   }
+ }
+diff --git a/src/features/user-maps/actions.ts b/src/features/user-maps/actions.ts
+index 9d92ad2..34631ed 100644
+--- a/src/features/user-maps/actions.ts
++++ b/src/features/user-maps/actions.ts
+@@ -8,8 +8,8 @@ export async function getUserMapsByStatusAction(userId: string) {
+     const res = await fetchUserMapsByStatus(userId);
+     if (res.ok) return { ok: true as const, data: res };
+     return { ok: false as const, message: res.message };
+-  } catch (e: any) {
+-    return { ok: false as const, message: e?.message ?? "Failed to load list" };
++  } catch (e) {
++    return { ok: false as const, message: (e as Error)?.message ?? "Failed to load list" };
+   }
+ }
+ 
+@@ -23,9 +23,9 @@ async function addWithStatus(mapId: number, status: MapStatus, stages: number[]
+       stages,
+     });
+     if (res.ok) return { ok: true as const };
+-    return { ok: false as const, message: (res as any).message ?? "Failed" };
+-  } catch (e: any) {
+-    return { ok: false as const, message: e?.message ?? "Failed" };
++    return { ok: false as const, message: res.message ?? "Failed" };
++  } catch (e) {
++    return { ok: false as const, message: (e as Error)?.message ?? "Failed" };
+   }
+ }
+ 
+diff --git a/src/features/user-maps/components/MyListView.tsx b/src/features/user-maps/components/MyListView.tsx
+index 94256e7..b7887c8 100644
+--- a/src/features/user-maps/components/MyListView.tsx
++++ b/src/features/user-maps/components/MyListView.tsx
+@@ -15,7 +15,7 @@ export function MyListView({ userId }: { userId: string }) {
+     queryKey: ["api", "user-maps", "by-status", userId],
+     queryFn: () =>
+       fetchUserMapsByStatus(userId).then((r) => {
+-        if (!r.ok) throw new Error((r as any).message);
++        if (!r.ok) throw new Error(r.message);
+         return r;
+       }),
+     staleTime: 30_000,
+diff --git a/src/ui/components/card/MapCard.tsx b/src/ui/components/card/MapCard.tsx
+index 796e95f..c52a0ce 100644
+--- a/src/ui/components/card/MapCard.tsx
++++ b/src/ui/components/card/MapCard.tsx
+@@ -24,7 +24,7 @@ export function MapCard({ item, onAddPlanned, onAddOngoing, onAddCompleted, load
+       setLocalLoading(false)
+       setSuccess(true);
+     }
+-  }, [loading])
++  }, [loading, localLoading])
+ 
+   return (
+     <Paper withBorder radius="md" p="md">
+diff --git a/src/ui/components/section/GlowSection.tsx b/src/ui/components/section/GlowSection.tsx
+index a4a03f7..97e5819 100644
+--- a/src/ui/components/section/GlowSection.tsx
++++ b/src/ui/components/section/GlowSection.tsx
+@@ -36,11 +36,11 @@ export function GlowSection({
+     setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+   };
+ 
+-  const handleEnter = (e: React.MouseEvent<HTMLDivElement>) => {
++  const handleEnter = () => {
+     setHovered(true);
+   };
+ 
+-  const handleLeave = (e: React.MouseEvent<HTMLDivElement>) => {
++  const handleLeave = () => {
+     setHovered(false);
+   };
+ 

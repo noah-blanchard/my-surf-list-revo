@@ -1,7 +1,6 @@
 "use client";
 import { z } from "zod";
 import type { Database } from "@/types/supabase";
-import type { User } from "@supabase/supabase-js";
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 

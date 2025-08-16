@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     const safe = UserStatsSchema.parse(stats);
 
     return NextResponse.json({ ok: true, data: safe }, { status: 200, headers: { "Cache-Control": "no-store" } });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, message: e?.message ?? "Server error" }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ ok: false, message: (e as Error)?.message ?? "Server error" }, { status: 500 });
   }
 }

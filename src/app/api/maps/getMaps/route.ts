@@ -14,9 +14,9 @@ export async function GET(req: Request) {
       pageSize: url.searchParams.get("pageSize"),
       q: url.searchParams.get("q") || undefined,
       tier: url.searchParams.get("tier") || undefined,
-      isLinear: (url.searchParams.get("type") as any) || undefined, // type=all|true|false
-      sort: (url.searchParams.get("sort") as any) || undefined,
-      dir: (url.searchParams.get("dir") as any) || undefined,
+      isLinear: (url.searchParams.get("type")) || undefined, // type=all|true|false
+      sort: (url.searchParams.get("sort")) || undefined,
+      dir: (url.searchParams.get("dir")) || undefined,
     });
 
     if (!parsed.success) {
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
       sort === "tier" ? "tier" :
       "created_at";
 
-    query = query.order(sortCol as any, { ascending: dir === "asc" });
+    query = query.order(sortCol, { ascending: dir === "asc" });
 
     const { data: items, error, count } = await query.range(from, to);
 
@@ -71,7 +71,7 @@ export async function GET(req: Request) {
       },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, message: e?.message ?? "Server error" }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ ok: false, message: (e as Error)?.message ?? "Server error" }, { status: 500 });
   }
 }

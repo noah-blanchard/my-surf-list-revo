@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
 import { signOutAction } from "../actions";
-import { Modal, Button, Text } from "@mantine/core";
+import { Modal, Text } from "@mantine/core";
 
 export function SignOutButton() {
     const [opened, setOpened] = useState(false);

@@ -24,7 +24,7 @@ export function MapCard({ item, onAddPlanned, onAddOngoing, onAddCompleted, load
       setLocalLoading(false)
       setSuccess(true);
     }
-  }, [loading])
+  }, [loading, localLoading])
 
   return (
     <Paper withBorder radius="md" p="md">

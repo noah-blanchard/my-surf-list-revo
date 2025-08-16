@@ -3,7 +3,7 @@ import * as React from "react";
 import { Paper, Stack, Group, TextInput, SegmentedControl, Switch, Select } from "@mantine/core";
 import { KsfSyncButton } from "./KsfSyncButton";
 
-export function KsfSyncPanel({ userId, defaultSteam64 }: { userId: string; defaultSteam64?: string }) {
+export function KsfSyncPanel({ defaultSteam64 }: { userId: string; defaultSteam64?: string }) {
 
     const [steam64, setSteam64] = React.useState(defaultSteam64 ?? "");
     const [status, setStatus] = React.useState<"Planned" | "On hold" | "Dropped" | "Completed" | "Ongoing">("Completed");

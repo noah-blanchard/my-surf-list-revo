@@ -1,6 +1,6 @@
 export type SyncProgress =
-  | { phase: "fetch" | "resolve" | "upsert"; pct: number; message?: string; meta?: Record<string, any> }
-  | { phase: "done"; pct: 100; message?: string; meta?: Record<string, any> }
+  | { phase: "fetch" | "resolve" | "upsert"; pct: number; message?: string; meta?: Record<string, unknown> }
+  | { phase: "done"; pct: 100; message?: string; meta?: Record<string, unknown> }
   | { phase: "error"; pct: number; message: string };
 
 export function startKsfSync(params: {

@@ -8,8 +8,8 @@ export async function getUserMapsByStatusAction(userId: string) {
     const res = await fetchUserMapsByStatus(userId);
     if (res.ok) return { ok: true as const, data: res };
     return { ok: false as const, message: res.message };
-  } catch (e: any) {
-    return { ok: false as const, message: e?.message ?? "Failed to load list" };
+  } catch (e) {
+    return { ok: false as const, message: (e as Error)?.message ?? "Failed to load list" };
   }
 }
 
@@ -23,9 +23,9 @@ async function addWithStatus(mapId: number, status: MapStatus, stages: number[] 
       stages,
     });
     if (res.ok) return { ok: true as const };
-    return { ok: false as const, message: (res as any).message ?? "Failed" };
-  } catch (e: any) {
-    return { ok: false as const, message: e?.message ?? "Failed" };
+    return { ok: false as const, message: res.message ?? "Failed" };
+  } catch (e) {
+    return { ok: false as const, message: (e as Error)?.message ?? "Failed" };
   }
 }
 
