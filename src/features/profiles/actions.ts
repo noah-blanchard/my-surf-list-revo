@@ -26,7 +26,7 @@ export async function editProfileAction(input: unknown): Promise<EditProfileResp
     try {
         // ⬇️ Appel centralisé via api.ts
         return await editProfileApi(parsed.data);
-    } catch (e: any) {
-        return { ok: false, message: e?.message ?? "Failed to edit profile" };
+    } catch (e) {
+        return { ok: false, message: (e as Error)?.message ?? "Failed to edit profile" };
     }
 }

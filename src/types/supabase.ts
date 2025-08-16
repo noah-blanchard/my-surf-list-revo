@@ -215,6 +215,18 @@ export type Database = {
         Args: { a: number[] }
         Returns: number[]
       }
+      edit_profile: {
+        Args: {
+          p_display_name: string
+          p_steam_id64: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      edit_profile_self: {
+        Args: { p_display_name: string; p_steam_id64: string }
+        Returns: undefined
+      }
       set_map_status: {
         Args: {
           p_map_id: number

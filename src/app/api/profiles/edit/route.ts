@@ -17,13 +17,11 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServerSupabase();
 
-    // Require session
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
     if (userErr || !user) {
       return NextResponse.json({ ok: false, message: "Not authenticated" } satisfies EditProfileResponse, { status: 401 });
     }
 
-    // Call RPC exposed to authenticated users
     const { error } = await supabase.rpc("edit_profile_self", {
       p_display_name: display_name,
       p_steam_id64: steam_id64 ?? null,
@@ -34,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true } satisfies EditProfileResponse, { status: 200 });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, message: e?.message ?? "Server error" } satisfies EditProfileResponse, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ ok: false, message: (e as Error)?.message ?? "Server error" } satisfies EditProfileResponse, { status: 500 });
   }
 }
