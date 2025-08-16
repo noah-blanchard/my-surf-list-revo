@@ -1,6 +1,8 @@
 "use client";
 import { z } from "zod";
 import type { Database } from "@/types/supabase";
+import type { EditProfilePayload, EditProfileResponse } from "./validators";
+
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -50,4 +52,14 @@ export async function fetchMe(options?: { signal?: AbortSignal }) {
     return parsed.data;
 }
 
-
+export async function editProfileApi(body: EditProfilePayload): Promise<EditProfileResponse> {
+    const res = await fetch("/api/profiles/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        credentials: "include",
+    });
+    const data = (await res.json()) as EditProfileResponse;
+    if (!res.ok) throw new Error(data.message || "Failed to edit profile");
+    return data;
+}
