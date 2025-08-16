@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { GetStatsQuery, UserStatsSchema } from "@/features/stats/validators";
 
 async function countStatus(

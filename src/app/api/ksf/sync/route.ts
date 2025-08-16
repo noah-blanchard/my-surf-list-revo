@@ -1,5 +1,5 @@
 import type { Database } from "@/types/supabase";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { steam64ToSteam2 } from "@/utils/steam";
 
 const KSF_BASE = process.env.KSF_BASE_URL || "https://ksf.surf";

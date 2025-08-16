@@ -1,9 +1,9 @@
 // lib/auth.ts
 import { redirect } from "next/navigation";
-import { createServerSupabase } from "./supabase/server";
+import { createClient } from "./supabase/server";
 
 export async function getSession() {
-  const supabase = await createServerSupabase();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

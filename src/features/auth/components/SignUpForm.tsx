@@ -25,46 +25,69 @@ export function SignUpForm({
   const [error, setError] = React.useState<string | null>(null);
   const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
 
+  // util
+  const onlyDigits = (v: string) => v.replace(/\D+/g, "");
+
   const form = useForm({
     initialValues: { email: "", password: "", displayName: "", steamId64: "" },
+    validateInputOnBlur: true,
+    validateInputOnChange: true,
     validate: {
       email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : "Invalid email address"),
-      password: (v) => (v.length >= 6 ? null : "Minimum 6 characters"),
+      password: (v) => (v.trim().length >= 6 ? null : "Minimum 6 characters"),
       displayName: (v) => {
         const name = (v ?? "").trim();
         if (name.length < 2) return "Display Name must be at least 2 characters";
         if (name.length > 32) return "Display Name must be at most 32 characters";
         return null;
       },
-      // steam id isnt optional
+      // ⚠️ Tu avais "You can add or change it later" mais champ requis.
+      // Je laisse REQUIS comme ton commentaire l’indiquait; si tu veux le rendre optionnel, dis-moi et je te pousse la version.
       steamId64: (v) => {
-        if (!v) return "SteamID64 is required";
-        if (!/^\d{17}$/.test(v)) return "SteamID64 must be 17 digits";
-        if (!v.startsWith("765")) return "SteamID64 should start with 765…";
+        const s = onlyDigits(v ?? "");
+        if (!s) return "SteamID64 is required";
+        if (!/^\d{17}$/.test(s)) return "SteamID64 must be 17 digits";
+        if (!s.startsWith("765")) return "SteamID64 should start with 765…";
         return null;
       },
     },
+    transformValues: (values) => ({
+      email: values.email.trim(),
+      password: values.password,
+      displayName: values.displayName.trim(),
+      steamId64: onlyDigits(values.steamId64.trim()),
+    }),
   });
 
-  const onSubmit = form.onSubmit(async ({ email, password, displayName, steamId64 }) => {
+  const disabled = loading || !!successMsg;
+
+  const onSubmit = form.onSubmit(async () => {
     setError(null);
     setSuccessMsg(null);
     setLoading(true);
 
-    const sid = steamId64.trim();
-    const res = await action(email, password, displayName.trim(), sid);
-    setLoading(false);
+    // applique transformValues
+    const { email, password, displayName, steamId64 } = form.getTransformedValues();
 
+    try {
+      const res = await action(email, password, displayName, steamId64);
 
-    if (!res?.ok) {
-      setError(res?.message ?? "An error occurred");
-      return;
+      console.log("res", res)
+
+      if (!res?.ok) {
+        setError(res?.message ?? "An error occurred");
+      } else {
+        setSuccessMsg(
+          res?.needsConfirmation
+            ? res.message ?? "Check your inbox to confirm your account."
+            : res.message ?? "Account created."
+        );
+      }
+    } catch (e) {
+      setError((e as Error)?.message ?? "An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
-    setSuccessMsg(
-      res?.needsConfirmation
-        ? res.message ?? "Check your inbox to confirm your account."
-        : res.message ?? "Account created."
-    );
   });
 
   return (
@@ -93,7 +116,6 @@ export function SignUpForm({
             </Alert>
             <Anchor size="sm" href="/sign-in">Go to Sign in</Anchor>
           </>
-
         ) : (
           <Stack gap="md">
             <TextInput
@@ -102,6 +124,7 @@ export function SignUpForm({
               withAsterisk
               size="md"
               radius="md"
+              disabled={disabled}
               {...form.getInputProps("email")}
             />
 
@@ -111,6 +134,7 @@ export function SignUpForm({
               withAsterisk
               size="md"
               radius="md"
+              disabled={disabled}
               {...form.getInputProps("displayName")}
             />
 
@@ -120,6 +144,7 @@ export function SignUpForm({
               withAsterisk
               size="md"
               radius="md"
+              disabled={disabled}
               {...form.getInputProps("password")}
             />
 
@@ -127,10 +152,13 @@ export function SignUpForm({
               label="SteamID64"
               withAsterisk
               placeholder="7656XXXXXXXXXXXXXX"
-              description="17 digits. You can add or change it later in your profile."
+              description="17 digits."
               size="md"
               radius="md"
+              disabled={disabled}
               {...form.getInputProps("steamId64")}
+              // Normalise en direct à la saisie
+              onChange={(e) => form.setFieldValue("steamId64", onlyDigits(e.currentTarget.value))}
             />
 
             <Group justify="space-between" mt="md">
@@ -150,6 +178,7 @@ export function SignUpForm({
               variant="default"
               glowGradient="ocean"
               glowOpacity={0.3}
+              disabled={disabled || !form.isValid()}
             >
               {submitLabel}
             </GlowButton>

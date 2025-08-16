@@ -1,38 +1,66 @@
+"use client";
+
 import { useState } from "react";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
 import { signOutAction } from "../actions";
 import { Modal, Text } from "@mantine/core";
+import { useRouter } from "next/navigation";
 
 export function SignOutButton() {
-    const [opened, setOpened] = useState(false);
-    const [loading, setLoading] = useState(false);
+  const [opened, setOpened] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-    async function logout() {
-        setLoading(true);
-        await signOutAction();
-        setLoading(false);
+  async function logout() {
+    setLoading(true);
+    const res = await signOutAction();
+    setLoading(false);
+    if (res.ok) {
+      router.replace("/sign-in"); // <<< redirection ici
     }
+  }
 
-    return (
-        <>
-            <GlowButton glowGradient={"magma"} glowOpacity={0.7} glowSize={200} onClick={() => setOpened(true)}>
-                Logout
-            </GlowButton>
-            <Modal
-                radius={"md"}
-                opened={opened}
-                onClose={() => setOpened(false)}
-                title="Confirm Logout"
-                centered
-            >
-                <Text mb="md" fw={500}>Are you sure you want to logout?</Text>
-                <GlowButton loading={loading} color="red" glowGradient={"magma"} glowOpacity={0.7} glowSize={200} onClick={logout} mr="sm">
-                    Yes, Logout
-                </GlowButton>
-                <GlowButton variant="default" glowOpacity={0.7} glowSize={200} onClick={() => setOpened(false)}>
-                    Cancel
-                </GlowButton>
-            </Modal>
-        </>
-    );
+  return (
+    <>
+      <GlowButton
+        glowGradient="magma"
+        glowOpacity={0.7}
+        glowSize={200}
+        onClick={() => setOpened(true)}
+      >
+        Logout
+      </GlowButton>
+
+      <Modal
+        radius="md"
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title="Confirm Logout"
+        centered
+      >
+        <Text mb="md" fw={500}>
+          Are you sure you want to logout?
+        </Text>
+        <GlowButton
+          loading={loading}
+          color="red"
+          glowGradient="magma"
+          glowOpacity={0.7}
+          glowSize={200}
+          onClick={logout}
+          mr="sm"
+        >
+          Yes, Logout
+        </GlowButton>
+        <GlowButton
+          variant="default"
+          glowOpacity={0.7}
+          glowSize={200}
+          onClick={() => setOpened(false)}
+        >
+          Cancel
+        </GlowButton>
+      </Modal>
+    </>
+  );
 }

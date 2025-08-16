@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { AddMapAdminBody, AddMapResponse } from "@/features/user-maps/validators";
 
 export async function POST(req: NextRequest) {

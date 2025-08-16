@@ -1,17 +1,10 @@
 import { Box } from "@mantine/core";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 
 export default async function PublicLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const supabase = await createServerSupabase();
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user) redirect("/dashboard");
 
     return (
         <Box

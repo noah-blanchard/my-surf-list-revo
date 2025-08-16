@@ -1,6 +1,6 @@
 // src/app/api/maps/getMaps/route.ts
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import type { Database } from "@/types/supabase";
 import { GetMapsQuery } from "@/features/maps/validators";
 

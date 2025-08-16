@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import type { Database } from "@/types/supabase";
 import { GetByStatusQuery, GetByStatusResponse } from "@/features/user-maps/validators";
 

@@ -1,48 +1,84 @@
+// src/features/auth/actions.ts
 "use server";
-import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
 import { signInSchema, signUpSchema } from "./validators";
-import { serverSignIn, serverSignUp, serverSignOut } from "./api";
 
-export async function signUpAction(email: string, password: string, displayName: string, steamId64?: string) {
-    const parsed = signUpSchema.safeParse({
-        email,
-        password,
-        displayName,
-        steamId64,
-    });
+// Types de retour uniformes
+type ActionResult = { ok: true, needsConfirmation?: boolean } | { ok: false; message: string, needsConfirmation?: boolean };
 
+// -------------------------------
+// SIGN UP (server-side, no redirect)
+// -------------------------------
+export async function signUpAction(
+  email: string,
+  password: string,
+  displayName: string,
+  steamId64?: string
+): Promise<ActionResult> {
+  const parsed = signUpSchema.safeParse({ email, password, displayName, steamId64 });
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
 
-    if (!parsed.success) {
-        return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input" };
-    }
-    try {
-        await serverSignUp(parsed.data);
-        return { ok: true, message: "Account created successfully. Please check your email to confirm." };
-    } catch (e) {
-        return { ok: false, message: (e as Error).message ?? "Failed to sign up" };
-    }
+  const supabase = await createClient();
+
+  const { error, data } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: {
+      data: {
+        display_name: parsed.data.displayName,
+        steam_id64: parsed.data.steamId64 ?? null,
+      },
+    },
+  });
+
+  if (error) return { ok: false, message: error.message };
+
+  // Optionnel: invalider des vues si nécessaire
+  // revalidatePath("/", "layout");
+
+  console.log(data);
+
+  return { ok: true, needsConfirmation: true };
 }
 
-export async function signInAction(email: string, password: string) {
-    const parsed = signInSchema.safeParse({
-        email,
-        password,
-    });
-    if (!parsed.success) {
-        return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input" };
-    }
-    try {
-        await serverSignIn(parsed.data);
-        return { ok: true, message: "Signed in successfully" };
-    } catch (e) {
-        return { ok: false, message: (e as Error).message ?? "Failed to sign in" };
-    }
+// -------------------------------
+// SIGN IN (server-side, no redirect)
+// -------------------------------
+export async function signInAction(email: string, password: string): Promise<ActionResult> {
+  const parsed = signInSchema.safeParse({ email, password });
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (error) return { ok: false, message: error.message };
+
+  // Optionnel
+  // revalidatePath("/", "layout");
+
+  return { ok: true };
 }
 
-export async function signOutAction() {
-    try {
-        await serverSignOut();
-    } finally {
-        redirect("/sign-in");
-    }
+// -------------------------------
+// SIGN OUT (server-side, no redirect)
+// -------------------------------
+export async function signOutAction(): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signOut();
+  if (error) return { ok: false, message: error.message };
+
+  // Optionnel
+  // revalidatePath("/", "layout");
+
+  return { ok: true };
 }
