@@ -68,11 +68,9 @@ export default function SearchMapsView() {
 
   const showSkeletons = isLoading || (!data && isFetching);
 
-  // --- Mutations: add map as Planned / Ongoing / Completed
   const queryClient = useQueryClient();
 
   const invalidateLists = () => {
-    // Refresh any user-maps derived views after add
     queryClient.invalidateQueries({ queryKey: ["api", "user-maps"] }).catch(() => {});
   };
 

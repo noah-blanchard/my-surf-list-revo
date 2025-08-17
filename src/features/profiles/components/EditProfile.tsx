@@ -13,6 +13,7 @@ import {
 import { mantineZodResolver } from "@/lib/zod/zodResolver";
 import { editProfileAction } from "../actions";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 type Props = {
   opened: boolean;
@@ -21,13 +22,14 @@ type Props = {
   initialSteamId64?: string | null;
 };
 
-export function MeEditProfile({
+export function EditProfile({
   opened,
   onClose,
   initialDisplayName,
   initialSteamId64,
 }: Props) {
   const qc = useQueryClient();
+  const auth = useAuth();
 
   const form = useForm<EditProfilePayload>({
     initialValues: {
@@ -57,7 +59,7 @@ export function MeEditProfile({
   const mutation = useMutation<EditProfileResponse, Error, EditProfilePayload>({
     mutationFn: (payload) => editProfileAction(payload),
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["api", "profiles", "me"] });
+      await qc.invalidateQueries({ queryKey: ["api", "profiles", auth?.user?.id] });
       onClose();
     },
   });

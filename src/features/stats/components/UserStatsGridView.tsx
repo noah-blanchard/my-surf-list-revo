@@ -5,11 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserStatsAction } from "../actions";
 import { IconCancel, IconCheck, IconClock, IconProgress } from "@tabler/icons-react";
 
-export function UserStatsGridView({ userId }: { userId: string }) {
+export function UserStatsGridView({ userId }: { userId?: string }) {
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["userStats", userId],
-    queryFn: () => getUserStatsAction(userId),
+    queryKey: ["api", "stats", userId],
+    queryFn: () => getUserStatsAction(userId ?? ""),
     enabled: !!userId,
     refetchOnWindowFocus: false,
   });

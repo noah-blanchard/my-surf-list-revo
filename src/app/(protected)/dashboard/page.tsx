@@ -1,29 +1,23 @@
-import MeHeader from "@/features/profiles/components/MeHeader";
+import ProfileHeader from "@/features/profiles/components/ProfileHeader";
 import { Stack } from "@mantine/core";
 import { GlowSection } from "@/ui/components/section/GlowSection";
 import { UserStatsGridView } from "@/features/stats/components/UserStatsGridView";
-import { getSession } from "@/lib/auth";
+import { getUserServer } from "@/lib/auth";
 import { KsfSyncButton } from "@/features/ksf/components/KsfSyncButton";
 
 export default async function DashboardPage() {
+  const user = await getUserServer();
 
-    // get userId from session or context
-    const a = await getSession();
+  return (
+    <Stack gap="md">
+      <ProfileHeader userId={user?.id} />
 
-    const userId = a?.user?.id ?? "123"; // replace with actual user ID retrieval logic
+      <UserStatsGridView userId={user?.id} />
 
-
-    return (
-        <Stack gap="md">
-            <MeHeader />
-
-
-            <UserStatsGridView userId={userId} />
-
-            <GlowSection title="Sync KSF Completed Maps">
-                {/* Placeholders: mets ici ton composant de tableau, timeline, etc. */}
-                <KsfSyncButton />  
-            </GlowSection>
-        </Stack>
-    );
+      <GlowSection title="Sync KSF Completed Maps">
+        {/* Placeholders: mets ici ton composant de tableau, timeline, etc. */}
+        <KsfSyncButton />
+      </GlowSection>
+    </Stack>
+  );
 }

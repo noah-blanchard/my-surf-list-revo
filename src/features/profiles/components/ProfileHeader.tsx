@@ -3,20 +3,21 @@
 import { useState } from "react";
 import { ProfileSummary } from "@/ui/components/profile/ProfileSummary";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
-import { getMeAction } from "../actions";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@mantine/core";
 import { GlowSection } from "@/ui/components/section/GlowSection";
-import { MeEditProfile } from "./MeEditProfile";
+import { EditProfile } from "./EditProfile";
+import { getProfileAction } from "../actions";
 
-export default function MeHeader() {
+export default function ProfileHeader({ userId }: { userId?: string }) {
   const [editOpen, setEditOpen] = useState(false);
 
   const { data: queryData, isLoading } = useQuery({
-    queryKey: ["api", "profiles", "me"],
+    enabled: userId !== undefined && userId !== null && userId !== "",
+    queryKey: ["api", "profiles", userId],
     queryFn: async () => {
-      const res = await getMeAction();
-      return res.ok ? res.data : null;
+      const res = await getProfileAction(userId ?? "");
+      return res && res.ok ? res.data : null;
     },
     staleTime: 0,
     gcTime: 0,
@@ -48,7 +49,7 @@ export default function MeHeader() {
             }
           />
 
-          <MeEditProfile
+          <EditProfile
             opened={editOpen}
             onClose={() => setEditOpen(false)}
             initialDisplayName={displayName}
