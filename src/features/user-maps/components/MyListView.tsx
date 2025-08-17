@@ -5,16 +5,17 @@ import { GlowSection as Section } from "@/ui/components/section/GlowSection";
 import { MapListSkeleton } from "@/ui/components/list/MapListSkeleton";
 import { Alert, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { fetchUserMapsByStatus } from "../api";
 import { StatusAccordion } from "@/ui/components/list/StatusAccordion";
 import { SearchField } from "@/ui/components/inputs/SearchField";
 import { useDebouncedValue } from "@mantine/hooks";
+import { getUserMapsByStatusAction } from "../actions";
+import { MapItem } from "../validators";
 
 export function MyListView({ userId }: { userId: string }) {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["api", "user-maps", "by-status", userId],
     queryFn: () =>
-      fetchUserMapsByStatus(userId).then((r) => {
+      getUserMapsByStatusAction(userId).then((r) => {
         if (!r.ok) throw new Error(r.message);
         return r;
       }),
@@ -26,16 +27,17 @@ export function MyListView({ userId }: { userId: string }) {
 
   const filtered = React.useMemo(() => {
     if (!data?.ok) return null;
-    const match = (s: string) => (debounced ? s.toLowerCase().includes(debounced) : true);
-    const pick = (arr: typeof data.groups.Completed) =>
+    const match = (s: string) =>
+      debounced ? s.toLowerCase().includes(debounced) : true;
+    const pick = (arr: MapItem[]) =>
       debounced ? arr.filter((m) => match(m.name)) : arr;
 
     const groups = {
-      Completed: pick(data.groups.Completed),
-      Ongoing: pick(data.groups.Ongoing),
-      "On hold": pick(data.groups["On hold"]),
-      Planned: pick(data.groups.Planned),
-      Dropped: pick(data.groups.Dropped),
+      Completed: pick(data?.data?.groups.Completed),
+      Ongoing: pick(data?.data?.groups.Ongoing),
+      "On hold": pick(data?.data?.groups["On hold"]),
+      Planned: pick(data?.data?.groups.Planned),
+      Dropped: pick(data?.data?.groups.Dropped),
     };
 
     const counts = {

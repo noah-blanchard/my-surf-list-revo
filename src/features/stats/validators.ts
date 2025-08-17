@@ -6,10 +6,6 @@ export const GetStatsQuery = z.object({
 
 export type GetStatsQuery = z.infer<typeof GetStatsQuery>;
 
-// Typage des statuts (si tu veux réutiliser côté client)
-export const MapStatus = z.enum(["Planned", "On hold", "Dropped", "Completed", "Ongoing"]);
-export type MapStatus = z.infer<typeof MapStatus>;
-
 // Réponse normalisée
 export const UserStatsSchema = z.object({
   completed: z.number().int().nonnegative(),

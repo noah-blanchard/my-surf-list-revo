@@ -4,7 +4,7 @@ export const GetByStatusQuery = z.object({
     user_id: z.uuid(),
 });
 
-export const MapItemSchema = z.object({
+const MapItemSchema = z.object({
     id: z.number(),
     name: z.string(),
     tier: z.number(),

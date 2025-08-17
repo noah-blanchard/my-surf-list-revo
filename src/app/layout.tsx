@@ -1,6 +1,7 @@
 import "@mantine/core/styles.css";
-import { ColorSchemeScript, MantineProvider } from "@mantine/core";
-import QueryProvider from "@/lib/providers/QueryProvider";
+import { ColorSchemeScript } from "@mantine/core";
+import { QueryProvider } from "@/lib/providers/QueryProvider";
+import { MantineProvider } from "@/lib/providers/MantineProvider";
 
 export const metadata = {
   title: "My Surf List Revo",
@@ -17,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {/* Force le dark côté client */}
         <QueryProvider>
-          <MantineProvider defaultColorScheme="dark">
+          <MantineProvider>
             {children}
           </MantineProvider>
         </QueryProvider>
