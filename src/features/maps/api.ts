@@ -1,54 +1,47 @@
-// src/features/maps/api.ts
-import { z } from "zod";
-import type { Database } from "@/types/supabase";
+import {
+  SearchMapsPayload,
+  SearchMapsResponse,
+  SearchMapsResponseSchema,
+} from "@/app/api/maps/search/schemas";
 
-type MapRow = Database["public"]["Tables"]["maps"]["Row"];
+export async function fetchSearchMaps(
+  payload: SearchMapsPayload,
+  opts?: { signal?: AbortSignal }
+): Promise<SearchMapsResponse> {
+  const qs = new URLSearchParams();
 
-const GetMapsResponse = z.object({
-  ok: z.literal(true),
-  data: z.object({
-    items: z.array(z.any()), // tu peux raffiner avec un zod basé sur tes colonnes si tu veux
-    page: z.number().int().min(1),
-    pageSize: z.number().int().min(1),
-    total: z.number().int().min(0),
-    pageCount: z.number().int().min(1),
-    hasPrev: z.boolean(),
-    hasNext: z.boolean(),
-  }),
-}).or(
-  z.object({ ok: z.literal(false), message: z.string() })
-);
+  // page / pageSize
+  if (payload.page) qs.set("page", String(payload.page));
+  if (payload.pageSize) qs.set("pageSize", String(payload.pageSize));
 
-export type GetMapsOk = {
-  ok: true;
-  data: {
-    items: MapRow[];
-    page: number;
-    pageSize: number;
-    total: number;
-    pageCount: number;
-    hasPrev: boolean;
-    hasNext: boolean;
-  };
-};
-export type GetMapsResp = GetMapsOk | { ok: false; message: string };
+  // q
+  if (payload.q && payload.q.trim().length > 0) qs.set("q", payload.q.trim());
 
-export async function fetchMaps(page: number, opts?: { signal?: AbortSignal; pageSize?: number }): Promise<GetMapsResp> {
-  const qs = new URLSearchParams({ page: String(page) });
-  if (opts?.pageSize) qs.set("pageSize", String(opts.pageSize));
+  // tier
+  if (typeof payload.tier === "number") qs.set("tier", String(payload.tier));
 
-  const res = await fetch(`/api/maps/getMaps?${qs.toString()}`, {
+  // isLinear: boolean | undefined  ->  "true" | "false" (sinon on omet)
+  if (typeof payload.isLinear === "boolean") {
+    qs.set("isLinear", payload.isLinear ? "true" : "false");
+  }
+
+  // sort / dir (ont des defaults côté serveur)
+  if (payload.sort) qs.set("sort", payload.sort);
+  if (payload.dir) qs.set("dir", payload.dir);
+
+  const resp = await fetch(`/api/maps/search?${qs.toString()}`, {
     method: "GET",
     cache: "no-store",
     headers: { Accept: "application/json" },
     signal: opts?.signal,
   });
 
-  const json = await res.json();
-  const parsed = GetMapsResponse.safeParse(json);
-  if (!parsed.success) {
-    throw new Error(`Invalid /api/maps/getMaps response`);
-  }
-  // on garde le typage MapRow[] côté TS en cast, le runtime est validé par Zod
-  return parsed.data as GetMapsResp;
+  const json = await resp.json().catch(() => {
+    throw new Error(`Invalid JSON from /api/maps/search (HTTP ${resp.status})`);
+  });
+
+
+  const parsed = SearchMapsResponseSchema.safeParse(json);
+  if (!parsed.success) throw new Error("Invalid /api/maps/search response");
+  return parsed.data;
 }

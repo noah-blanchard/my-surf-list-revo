@@ -1,20 +1,16 @@
-// src/app/api/maps/getMaps/route.ts
 import { NextResponse } from "next/server";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import type { Database } from "@/types/supabase";
-import { GetMapsQuery } from "@/features/maps/validators";
-
-type MapRow = Database["public"]["Tables"]["maps"]["Row"];
+import { SearchMapsParamsSchema } from "./schemas";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const parsed = GetMapsQuery.safeParse({
+    const parsed = SearchMapsParamsSchema.safeParse({
       page: url.searchParams.get("page"),
       pageSize: url.searchParams.get("pageSize"),
       q: url.searchParams.get("q") || undefined,
       tier: url.searchParams.get("tier") || undefined,
-      isLinear: (url.searchParams.get("type")) || undefined, // type=all|true|false
+      isLinear: (url.searchParams.get("type")) || undefined,
       sort: (url.searchParams.get("sort")) || undefined,
       dir: (url.searchParams.get("dir")) || undefined,
     });
@@ -60,7 +56,7 @@ export async function GET(req: Request) {
       {
         ok: true,
         data: {
-          items: (items ?? []) as MapRow[],
+          items: (items ?? []),
           page,
           pageSize,
           total,

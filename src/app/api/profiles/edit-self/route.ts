@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { EditProfileSchema, EditProfileResponse } from "@/features/profiles/validators";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
+import { EditProfileResponse, EditProfileSchema } from "./schema";
 
 export async function POST(req: NextRequest) {
   try {

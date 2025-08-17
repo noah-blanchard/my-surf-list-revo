@@ -1,8 +1,7 @@
-// src/features/profiles/actions.ts
 "use client";
 
+import { EditProfileResponse, EditProfileSchema } from "@/app/api/profiles/edit-self/schema";
 import { fetchProfile, editProfileApi } from "./api";
-import { EditProfileSchema, EditProfileResponse } from "./validators";
 
 export async function getProfileAction(userId: string) {
   try {

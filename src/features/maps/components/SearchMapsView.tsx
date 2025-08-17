@@ -1,4 +1,3 @@
-// src/features/maps/components/SearchMapsView.tsx
 "use client";
 
 import * as React from "react";
@@ -11,15 +10,10 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { Alert, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  addPlannedAction,
-  addOngoingAction,
-  addCompletedAction,
-} from "@/features/user-maps/actions";
-import { Database } from "@/types/supabase";
-
-type MapRow = Database["public"]["Tables"]["maps"]["Row"];
-
+import { addPlannedAction, addOngoingAction, addCompletedAction } from "@/features/user-maps/actions";
+import { searchMapsAction } from "../actions";
+import type { SearchMapsPayload } from "@/app/api/maps/search/schemas";
+import { Map } from "../schemas";
 
 export default function SearchMapsView() {
   const [page, setPage] = React.useState(1);
@@ -33,35 +27,31 @@ export default function SearchMapsView() {
   const [sort, setSort] = React.useState<"created" | "alpha" | "tier">("created");
   const [dir, setDir] = React.useState<"asc" | "desc">("desc");
 
+  // reset page quand les filtres changent
   React.useEffect(() => {
     setPage(1);
   }, [debouncedQ, tier, type, sort, dir, pageSize]);
 
-  const qs = new URLSearchParams({
-    page: String(page),
-    pageSize: String(pageSize),
-    ...(debouncedQ ? { q: debouncedQ } : {}),
-    ...(tier ? { tier: String(tier) } : {}),
-    ...(type === "all" ? { type: "all" } : { type: String(type === "linear") }),
-    sort,
-    dir,
-  });
+  // Payload complet pour l'API (page & pageSize inclus)
+  const payload = React.useMemo<SearchMapsPayload>(() => {
+    return {
+      page,
+      pageSize,
+      q: debouncedQ.trim() ? debouncedQ.trim() : undefined,
+      tier: tier ?? undefined,
+      // isLinear attendu côté API: string transformé -> nous on garde boolean|undefined
+      isLinear: type === "all" ? undefined : type === "linear",
+      sort,
+      dir,
+    };
+  }, [page, pageSize, debouncedQ, tier, type, sort, dir]);
 
   const { data, isError, error, isLoading, isFetching } = useQuery({
-    queryKey: ["api", "maps", "list", Object.fromEntries(qs)],
+    queryKey: ["api", "maps", "list", payload],
     queryFn: async () => {
-      const res = await fetch(`/api/maps/getMaps?${qs.toString()}`, { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || json?.ok === false) throw new Error(json?.message || `HTTP ${res.status}`);
-      return json.data as {
-        items: MapRow[];
-        page: number;
-        pageSize: number;
-        total: number;
-        pageCount: number;
-        hasPrev: boolean;
-        hasNext: boolean;
-      };
+      const res = await searchMapsAction(payload);
+      if (!res.ok) throw new Error(res.message);
+      return res.data; // { items, page, pageSize, total, pageCount }
     },
     staleTime: 30_000,
   });
@@ -69,30 +59,20 @@ export default function SearchMapsView() {
   const showSkeletons = isLoading || (!data && isFetching);
 
   const queryClient = useQueryClient();
-
-  const invalidateLists = () => {
+  const invalidateLists = () =>
     queryClient.invalidateQueries({ queryKey: ["api", "user-maps"] }).catch(() => {});
-  };
 
   const plannedMut = useMutation({
     mutationFn: (mapId: number) => addPlannedAction(mapId),
-    onSuccess: (r) => {
-      if (r.ok) invalidateLists();
-    },
+    onSuccess: (r) => r.ok && invalidateLists(),
   });
-
   const ongoingMut = useMutation({
     mutationFn: (mapId: number) => addOngoingAction(mapId),
-    onSuccess: (r) => {
-      if (r.ok) invalidateLists();
-    },
+    onSuccess: (r) => r.ok && invalidateLists(),
   });
-
   const completedMut = useMutation({
     mutationFn: (mapId: number) => addCompletedAction(mapId),
-    onSuccess: (r) => {
-      if (r.ok) invalidateLists();
-    },
+    onSuccess: (r) => r.ok && invalidateLists(),
   });
 
   return (
@@ -124,7 +104,7 @@ export default function SearchMapsView() {
         ) : data?.items?.length ? (
           <>
             <ResultsGrid>
-              {data.items.map((m) => (
+              {data.items.map((m: Map) => (
                 <MapCard
                   loading={plannedMut.isPending || ongoingMut.isPending || completedMut.isPending}
                   key={m.id}

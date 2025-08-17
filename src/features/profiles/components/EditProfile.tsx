@@ -5,15 +5,11 @@ import { Modal, TextInput, Group } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  EditProfileSchema,
-  type EditProfilePayload,
-  type EditProfileResponse,
-} from "@/features/profiles/validators";
 import { mantineZodResolver } from "@/lib/zod/zodResolver";
 import { editProfileAction } from "../actions";
 import { GlowButton } from "@/ui/components/buttons/GlowButton";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { EditProfilePayload, EditProfileResponse, EditProfileSchema } from "@/app/api/profiles/edit-self/schema";
 
 type Props = {
   opened: boolean;

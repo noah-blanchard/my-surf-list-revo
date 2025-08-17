@@ -2,8 +2,8 @@
 
 import { AppShell, Group, Title, Box, Burger } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { Sidebar } from "@/features/nav/Sidebar";
-import { defaultSidebarItems } from "@/features/nav/sidebarItems";
+import { Sidebar } from "@/features/nav/components/Sidebar";
+import { defaultSidebarItems } from "@/features/nav/components/sidebarItems";
 import { SignOutButton } from "@/features/auth/components/LogoutButton";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";

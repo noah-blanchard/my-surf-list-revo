@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import {
-  Paper, Stack, TextInput, PasswordInput, Title, Text, Alert, Divider, Anchor, Group,
+  Paper,
+  Stack,
+  TextInput,
+  PasswordInput,
+  Title,
+  Text,
+  Alert,
+  Divider,
+  Anchor,
+  Group,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconCheck, IconAlertTriangle } from "@tabler/icons-react";
@@ -17,7 +26,12 @@ export function SignUpForm({
   title = "Create account",
   submitLabel = "Create account",
 }: {
-  action: (email: string, password: string, displayName: string, steamId64?: string) => Promise<ActionResult>;
+  action: (
+    email: string,
+    password: string,
+    displayName: string,
+    steamId64?: string
+  ) => Promise<ActionResult>;
   title?: string;
   submitLabel?: string;
 }) {
@@ -37,8 +51,10 @@ export function SignUpForm({
       password: (v) => (v.trim().length >= 6 ? null : "Minimum 6 characters"),
       displayName: (v) => {
         const name = (v ?? "").trim();
-        if (name.length < 2) return "Display Name must be at least 2 characters";
-        if (name.length > 32) return "Display Name must be at most 32 characters";
+        if (name.length < 2)
+          return "Display Name must be at least 2 characters";
+        if (name.length > 32)
+          return "Display Name must be at most 32 characters";
         return null;
       },
       // ⚠️ Tu avais "You can add or change it later" mais champ requis.
@@ -67,12 +83,11 @@ export function SignUpForm({
     setLoading(true);
 
     // applique transformValues
-    const { email, password, displayName, steamId64 } = form.getTransformedValues();
+    const { email, password, displayName, steamId64 } =
+      form.getTransformedValues();
 
     try {
       const res = await action(email, password, displayName, steamId64);
-
-      console.log("res", res)
 
       if (!res?.ok) {
         setError(res?.message ?? "An error occurred");
@@ -98,23 +113,34 @@ export function SignUpForm({
       p="lg"
       withBorder
       style={{
-        maxWidth: 420, minWidth: 420,
+        maxWidth: 420,
+        minWidth: 420,
         backdropFilter: "blur(10px)",
         background: "rgba(20,20,20,0.55)",
         borderColor: "rgba(255,255,255,0.08)",
       }}
     >
       <Stack gap="md">
-        <Title order={2} ta="center">{title}</Title>
-        <Text c="dimmed" ta="center" size="sm">Create an account to continue</Text>
+        <Title order={2} ta="center">
+          {title}
+        </Title>
+        <Text c="dimmed" ta="center" size="sm">
+          Create an account to continue
+        </Text>
         <Divider my="xs" variant="dashed" />
 
         {successMsg ? (
           <>
-            <Alert color="teal" icon={<IconCheck size={16} />} title="Verification required">
+            <Alert
+              color="teal"
+              icon={<IconCheck size={16} />}
+              title="Verification required"
+            >
               {successMsg}
             </Alert>
-            <Anchor size="sm" href="/sign-in">Go to Sign in</Anchor>
+            <Anchor size="sm" href="/sign-in">
+              Go to Sign in
+            </Anchor>
           </>
         ) : (
           <Stack gap="md">
@@ -158,11 +184,18 @@ export function SignUpForm({
               disabled={disabled}
               {...form.getInputProps("steamId64")}
               // Normalise en direct à la saisie
-              onChange={(e) => form.setFieldValue("steamId64", onlyDigits(e.currentTarget.value))}
+              onChange={(e) =>
+                form.setFieldValue(
+                  "steamId64",
+                  onlyDigits(e.currentTarget.value)
+                )
+              }
             />
 
             <Group justify="space-between" mt="md">
-              <Anchor size="sm" href="/sign-in">Already have an account? Sign in</Anchor>
+              <Anchor size="sm" href="/sign-in">
+                Already have an account? Sign in
+              </Anchor>
             </Group>
 
             {error && (

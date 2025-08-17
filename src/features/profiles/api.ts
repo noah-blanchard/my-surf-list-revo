@@ -1,24 +1,11 @@
 // src/features/profiles/api.ts
 "use client";
 
-import { z } from "zod";
 import type { Database } from "@/types/supabase";
-import type { EditProfilePayload, EditProfileResponse } from "./validators";
+import { EditProfilePayload, EditProfileResponse } from "@/app/api/profiles/edit-self/schema";
+import { GetProfileResponseSchema } from "@/app/api/profiles/[userId]/schemas";
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-
-const ProfileSchema = z.object({
-  user_id: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  display_name: z.string().nullable(),
-  steam_id64: z.string().nullable(),
-});
-
-const ProfileResponseSchema = z.object({
-  profile: ProfileSchema.nullable(),
-});
-export type ProfileResponse = z.infer<typeof ProfileResponseSchema>;
 
 export async function fetchProfile(userId: string, options?: { signal?: AbortSignal }) {
   const res = await fetch(`/api/profiles/${encodeURIComponent(userId)}`, {
@@ -34,7 +21,7 @@ export async function fetchProfile(userId: string, options?: { signal?: AbortSig
   }
 
   const json = await res.json();
-  const parsed = ProfileResponseSchema.safeParse(json);
+  const parsed = GetProfileResponseSchema.safeParse(json);
   if (!parsed.success) {
     throw new Error("Invalid /api/profiles/[userId] response shape");
   }

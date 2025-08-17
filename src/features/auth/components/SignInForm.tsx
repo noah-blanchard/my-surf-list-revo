@@ -49,8 +49,6 @@ export function SignInForm({
     const res = await action(email, password);
     setLoading(false);
 
-    console.log(res, "res")
-
     if (res.ok) {
       router.replace("/dashboard");
     } else if (res.message) {

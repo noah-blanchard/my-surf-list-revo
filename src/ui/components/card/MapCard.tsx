@@ -2,16 +2,15 @@
 "use client";
 import { Badge, Group, Paper, Skeleton, Stack, Text, Menu, Button } from "@mantine/core";
 import { IconPlus, IconChevronDown, IconPlayerPlay, IconCalendarPlus, IconCheck } from "@tabler/icons-react";
-import type { Database } from "@/types/supabase";
 import { useEffect, useState } from "react";
-type MapRow = Database["public"]["Tables"]["maps"]["Row"];
+import { Map } from "@/features/maps/schemas";
 
 type MapCardProps = {
-  item: MapRow;
+  item: Map;
   loading: boolean;
-  onAddPlanned?: (map: MapRow) => void;
-  onAddOngoing?: (map: MapRow) => void;
-  onAddCompleted?: (map: MapRow) => void;
+  onAddPlanned?: (map: Map) => void;
+  onAddOngoing?: (map: Map) => void;
+  onAddCompleted?: (map: Map) => void;
 };
 
 export function MapCard({ item, onAddPlanned, onAddOngoing, onAddCompleted, loading }: MapCardProps) {

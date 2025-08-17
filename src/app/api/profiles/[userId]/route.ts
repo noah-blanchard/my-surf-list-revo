@@ -1,16 +1,16 @@
 // src/app/api/profiles/[userId]/route.ts
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
+import { GetProfileSchema } from "./schemas";
 
-const ParamsSchema = z.object({ userId: z.string().min(1, "Missing userId") });
+type Ctx = { params: Promise<{ userId?: string }> };
 
 export async function GET(
   _req: Request,
-  context: { params: { userId?: string } }
+  context: Ctx
 ) {
   const params = await context.params;
-  const parse = ParamsSchema.safeParse(params);
+  const parse = GetProfileSchema.safeParse(params);
   if (!parse.success) {
     return NextResponse.json({ error: parse.error.issues[0]?.message ?? "Bad request" }, { status: 400 });
   }
@@ -25,7 +25,6 @@ export async function GET(
     .single();
 
   if (error?.code === "PGRST116") {
-    // row not found
     return NextResponse.json({ profile: null }, { status: 200, headers: { "Cache-Control": "no-store" } });
   }
   if (error) {

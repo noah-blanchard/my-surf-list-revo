@@ -23,7 +23,7 @@ export async function signUpAction(
 
   const supabase = await createClient();
 
-  const { error, data } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
@@ -35,11 +35,6 @@ export async function signUpAction(
   });
 
   if (error) return { ok: false, message: error.message };
-
-  // Optionnel: invalider des vues si nécessaire
-  // revalidatePath("/", "layout");
-
-  console.log(data);
 
   return { ok: true, needsConfirmation: true };
 }
