@@ -1,10 +1,18 @@
+import { getUserServer } from "@/lib/auth";
 import { Box } from "@mantine/core";
+import { redirect } from "next/navigation";
 
 export default async function PublicLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+
+    const user = await getUserServer();
+
+    if (user) {
+        redirect("/dashboard");
+    }
 
     return (
         <Box
