@@ -1,7 +1,7 @@
 // ui/components/profile/MeEditProfile.tsx
 "use client";
 
-import { Modal, TextInput, Group, Button } from "@mantine/core";
+import { Modal, TextInput, Group } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import {
 } from "@/features/profiles/validators";
 import { mantineZodResolver } from "@/lib/zod/zodResolver";
 import { editProfileAction } from "../actions";
+import { GlowButton } from "@/ui/components/buttons/GlowButton";
 
 type Props = {
   opened: boolean;
@@ -88,12 +89,12 @@ export function MeEditProfile({
         )}
 
         <Group justify="flex-end" mt="lg">
-          <Button variant="default" type="button" onClick={onClose}>
+          <GlowButton variant="default" type="button" onClick={onClose}>
             Cancel
-          </Button>
-          <Button type="submit" loading={mutation.isPending}>
+          </GlowButton>
+          <GlowButton type="submit" loading={mutation.isPending}>
             Save
-          </Button>
+          </GlowButton>
         </Group>
       </form>
     </Modal>
