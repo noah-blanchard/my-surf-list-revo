@@ -64,6 +64,7 @@ export function EditMapEntryModal({
           <>
             <Divider />
             <NumberGridMultiSelect
+              toggleAll={status === MapStatusEnum.Completed}
               onAdd={onAddStage}
               onRemove={onRemoveStage}
               label="Completed stages"

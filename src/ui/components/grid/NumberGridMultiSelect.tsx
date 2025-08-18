@@ -20,9 +20,11 @@ type Props = {
   onRemove: (n: number) => void;
   cols?: number; // fewer cols = wider buttons (default 6)
   rowHeight?: number; // button height (default 36)
+  toggleAll?: boolean; // make all of the buttons appear as selected
 };
 
 export function NumberGridMultiSelect({
+  toggleAll = false, // if true, all buttons appear selected
   label,
   count,
   value,
@@ -88,21 +90,23 @@ export function NumberGridMultiSelect({
           return (
             <Button
               key={n}
-              variant={active ? "filled" : "default"}
-              color={active ? "blue" : undefined}
+              variant={toggleAll || active ? "filled" : "default"}
+              color={toggleAll || active ? "blue" : undefined}
               size="compact-sm"
               radius="md"
               fullWidth // <-- uniform width per column
               h={rowHeight} // <-- uniform height
-              onClick={() => toggle(n)}
+              onClick={() => {
+                if (!toggleAll) toggle(n);
+              }}
               styles={{ label: { lineHeight: 1, whiteSpace: "nowrap" } }}
               className="transition-transform duration-75"
               style={{
-                transform: active ? "scale(1.02)" : undefined,
+                transform: toggleAll || active ? "scale(1.02)" : undefined,
                 position: "relative",
                 padding: 0,
               }}
-              rightSection={active ? <IconCheck size={16} /> : undefined}
+              rightSection={toggleAll || active ? <IconCheck size={16} /> : undefined}
             >
               {n}
             </Button>

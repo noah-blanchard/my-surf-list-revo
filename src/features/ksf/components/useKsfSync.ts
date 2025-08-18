@@ -28,7 +28,8 @@ export function useKsfSync() {
                 setLabel(data.message ?? data.phase);
                 if (data.phase === "done" || data.phase === "error") {
 
-                    qc.invalidateQueries({ queryKey: ["userStats"], exact: false });
+                    qc.invalidateQueries({ queryKey: ["api", "stats"], exact: false });
+                    qc.invalidateQueries({ queryKey: ["api", "user-maps"], exact: false });
                     setRunning(false);
                     es.close();
                 }
