@@ -2,6 +2,15 @@ import { Database } from "@/types/supabase";
 import { z } from "zod";
 
 export type MapRow = Database["public"]["Tables"]["maps"]["Row"];
+export type MapStatus = Database["public"]["Enums"]["map_status"];
+
+export enum MapStatusEnum {
+    Planned = "Planned",
+    OnHold = "On hold",
+    Dropped = "Dropped",
+    Completed = "Completed",
+    Ongoing = "Ongoing",
+}
 
 export const MapSchema = z.object({
     b_count: z.number().int().nonnegative(),
@@ -23,4 +32,13 @@ export const MapSchema = z.object({
     zones_count: z.number().int().nonnegative().nullable(),
 }).strict();
 
+export const MapStatusGroupSchema = z.object({
+    Completed: z.array(MapSchema),
+    Ongoing: z.array(MapSchema),
+    "On hold": z.array(MapSchema),
+    Planned: z.array(MapSchema),
+    Dropped: z.array(MapSchema),
+});
+
 export type Map = z.infer<typeof MapSchema>;
+export type MapStatusGroup = z.infer<typeof MapStatusGroupSchema>;

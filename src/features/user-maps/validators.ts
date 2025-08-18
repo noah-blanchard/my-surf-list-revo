@@ -1,27 +1,16 @@
 import { z } from "zod";
+import { MapSchema } from "../maps/schemas";
 
 export const GetByStatusQuery = z.object({
     user_id: z.uuid(),
 });
 
-const MapItemSchema = z.object({
-    id: z.number(),
-    name: z.string(),
-    tier: z.number(),
-    is_linear: z.boolean(),
-    completed_at: z.string().nullable().optional(),
-    updated_at: z.string().optional(),
-});
-
-const StatusEnum = z.enum(["Planned", "On hold", "Dropped", "Completed", "Ongoing"]);
-export type StatusEnum = z.infer<typeof StatusEnum>;
-
 export const GroupsSchema = z.object({
-    Completed: z.array(MapItemSchema),
-    Ongoing: z.array(MapItemSchema),
-    "On hold": z.array(MapItemSchema),
-    Planned: z.array(MapItemSchema),
-    Dropped: z.array(MapItemSchema),
+    Completed: z.array(MapSchema),
+    Ongoing: z.array(MapSchema),
+    "On hold": z.array(MapSchema),
+    Planned: z.array(MapSchema),
+    Dropped: z.array(MapSchema),
 });
 
 export const GetByStatusResponse = z.object({
@@ -39,7 +28,7 @@ export const GetByStatusResponse = z.object({
     z.object({ ok: z.literal(false), message: z.string() })
 );
 
-export type MapItem = z.infer<typeof MapItemSchema>;
+
 export type Groups = z.infer<typeof GroupsSchema>;
 export type GetByStatusOk = z.infer<typeof GetByStatusResponse> & { ok: true };
 

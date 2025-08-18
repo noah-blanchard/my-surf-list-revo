@@ -7,37 +7,44 @@ import { Alert, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { StatusAccordion } from "@/ui/components/list/StatusAccordion";
 import { SearchField } from "@/ui/components/inputs/SearchField";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { getUserMapsByStatusAction } from "../actions";
-import { MapItem } from "../validators";
+import type { Map } from "@/features/maps/schemas";
+import { EditMapEntry } from "./EditMapEntry";
 
 export function MyListView({ userId }: { userId: string }) {
+  // --- liste groupée
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["api", "user-maps", "by-status", userId],
-    queryFn: () =>
-      getUserMapsByStatusAction(userId).then((r) => {
-        if (!r.ok) throw new Error(r.message);
-        return r;
-      }),
+    queryFn: async () => {
+      const r = await getUserMapsByStatusAction(userId);
+      if (!r.ok) throw new Error(r.message);
+      return r;
+    },
     staleTime: 30_000,
   });
 
+  // --- recherche
   const [q, setQ] = React.useState("");
   const [debounced] = useDebouncedValue(q.trim().toLowerCase(), 200);
+
+  // --- sélection pour édition
+  const [opened, { open, close }] = useDisclosure(false);
+  const [selectedMap, setSelectedMap] = React.useState<Map | null>(null);
 
   const filtered = React.useMemo(() => {
     if (!data?.ok) return null;
     const match = (s: string) =>
       debounced ? s.toLowerCase().includes(debounced) : true;
-    const pick = (arr: MapItem[]) =>
+    const pick = (arr: Map[]) =>
       debounced ? arr.filter((m) => match(m.name)) : arr;
 
     const groups = {
-      Completed: pick(data?.data?.groups.Completed),
-      Ongoing: pick(data?.data?.groups.Ongoing),
-      "On hold": pick(data?.data?.groups["On hold"]),
-      Planned: pick(data?.data?.groups.Planned),
-      Dropped: pick(data?.data?.groups.Dropped),
+      Completed: pick(data.data.groups.Completed as Map[]),
+      Ongoing: pick(data.data.groups.Ongoing as Map[]),
+      "On hold": pick(data.data.groups["On hold"] as Map[]),
+      Planned: pick(data.data.groups.Planned as Map[]),
+      Dropped: pick(data.data.groups.Dropped as Map[]),
     };
 
     const counts = {
@@ -51,6 +58,12 @@ export function MyListView({ userId }: { userId: string }) {
 
     return { groups, counts };
   }, [data, debounced]);
+
+  // ouvrir le modal depuis une ligne
+  function handleEditClick(m: Map) {
+    setSelectedMap(m);
+    open();
+  }
 
   return (
     <Section title="My list" popOut={false}>
@@ -101,6 +114,34 @@ export function MyListView({ userId }: { userId: string }) {
                   emptyHint: "No dropped maps",
                 },
               ]}
+              onEdit={handleEditClick}
+            />
+          )}
+
+          {/* <Modal
+            opened={opened && !!selectedMap && (entryLoading || entryError)}
+            onClose={close}
+            centered
+            title={selectedMap ? `Edit · ${selectedMap.name}` : "Edit"}
+            withCloseButton
+          >
+            {entryLoading ? (
+              <Group justify="center" py="md">
+                <Loader />
+              </Group>
+            ) : entryError ? (
+              <Alert color="red" icon={<IconAlertTriangle size={16} />}>
+                {(entryErrObj as Error)?.message ?? "Failed to load entry"}
+              </Alert>
+            ) : null}
+          </Modal> */}
+
+          {/* Modal d’édition réel (monté uniquement quand entry OK) */}
+          {opened && selectedMap && (
+            <EditMapEntry
+              opened
+              onClose={close}
+              map={selectedMap}
             />
           )}
         </Stack>

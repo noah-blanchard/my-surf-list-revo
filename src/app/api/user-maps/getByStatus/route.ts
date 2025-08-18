@@ -1,18 +1,10 @@
 import { NextRequest } from "next/server";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import type { Database } from "@/types/supabase";
 import { GetByStatusQuery, GetByStatusResponse } from "@/features/user-maps/validators";
+import { GetByStatusRawResponseSchema } from "./schema";
+import { Map } from "@/features/maps/schemas";
+import { UserMap } from "@/features/user-maps/schemas";
 
-type UMRow = Database["public"]["Tables"]["user_maps"]["Row"];
-type MapRow = Database["public"]["Tables"]["maps"]["Row"];
-
-// DB a souvent `updated_at` nullable → on l’autorise
-type MapRowReturn = Pick<MapRow, "id" | "name" | "tier" | "is_linear"> & { updated_at: string | null };
-
-// Type *exact* de la jointure qu’on attend de Supabase
-type UMSelect = Pick<UMRow, "status" | "completed_at" | "updated_at"> & {
-  maps: Pick<MapRow, "id" | "name" | "tier" | "is_linear"> | null;
-};
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -38,10 +30,9 @@ export async function GET(req: NextRequest) {
   // On FORCE le type avec `.returns<UMSelect[]>()` pour éviter l’array fantôme.
   const { data, error } = await supabase
     .from("user_maps")
-    .select("status, completed_at, updated_at, maps:map_id(id, name, tier, is_linear)")
+    .select("*, maps:map_id(*)")
     .eq("user_id", user_id)
     .order("updated_at", { ascending: false })
-    .returns<UMSelect[]>(); // <<< Important
 
   if (error) {
     return new Response(JSON.stringify({ ok: false, message: error.message }), {
@@ -49,7 +40,15 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const groups: Record<UMRow["status"], MapRowReturn[]> = {
+  const safeRawData = GetByStatusRawResponseSchema.safeParse(data);
+  if (!safeRawData.success) {
+    return new Response(JSON.stringify({ ok: false, message: "Invalid response shape" }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    });
+  }
+
+
+  const groups: Record<UserMap["status"], Map[]> = {
     Completed: [],
     Ongoing: [],
     "On hold": [],
@@ -58,17 +57,10 @@ export async function GET(req: NextRequest) {
   };
 
   for (const row of data ?? []) {
-    // Défensif : si jamais Supabase renvoie un tableau (mauvaise relation), on prend le 1er.
     const m = Array.isArray(row.maps) ? row.maps[0] : row.maps;
     if (!m) continue;
 
-    const item: MapRowReturn = {
-      id: Number(m.id),
-      name: String(m.name),
-      tier: Number(m.tier),
-      is_linear: Boolean(m.is_linear),
-      updated_at: row.updated_at ?? null,
-    };
+    const item: Map = m;
 
     groups[row.status]?.push(item);
   }
