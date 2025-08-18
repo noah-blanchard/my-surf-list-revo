@@ -2,30 +2,44 @@
 import React from "react";
 import { SegmentedControl, Group, Text, ThemeIcon, rem } from "@mantine/core";
 import {
-  IconCheck,        // Completed
-  IconPlayerPause,  // On hold
-  IconCircleX,      // Dropped
-  IconBolt,         // Ongoing
+  IconCheck, // Completed
+  IconPlayerPause, // On hold
+  IconCircleX, // Dropped
+  IconBolt, // Ongoing
   IconCalendarPlus, // Planned
 } from "@tabler/icons-react";
 import type { MapStatusEnum } from "@/features/maps/schemas";
 
 // Optional: control order explicitly
 
-const META: Record<MapStatusEnum, {
-  label: string;
-  icon: React.ElementType;
-  color: string;       // Mantine color token
-  tint?: number;       // optional shade for ThemeIcon
-}> = {
-  Completed: { label: "Completed", icon: IconCheck,        color: "teal",   tint: 5 },
-  Ongoing:   { label: "Ongoing",   icon: IconBolt,         color: "blue",   tint: 5 },
-  "On hold": { label: "On hold",   icon: IconPlayerPause,  color: "yellow", tint: 5 },
-  Planned:   { label: "Planned",   icon: IconCalendarPlus, color: "gray",   tint: 5 },
-  Dropped:   { label: "Dropped",   icon: IconCircleX,      color: "red",    tint: 5 },
+const META: Record<
+  MapStatusEnum,
+  {
+    label: string;
+    icon: React.ElementType;
+    color: string;
+    tint?: number;
+  }
+> = {
+  Completed: { label: "Completed", icon: IconCheck, color: "teal", tint: 5 },
+  Ongoing: { label: "Ongoing", icon: IconBolt, color: "blue", tint: 5 },
+  "On hold": {
+    label: "On hold",
+    icon: IconPlayerPause,
+    color: "yellow",
+    tint: 5,
+  },
+  Planned: { label: "Planned", icon: IconCalendarPlus, color: "gray", tint: 5 },
+  Dropped: { label: "Dropped", icon: IconCircleX, color: "red", tint: 5 },
 };
 
-const ORDER = ["Completed", "Ongoing", "On hold", "Planned", "Dropped"] as const;
+const ORDER = [
+  "Completed",
+  "Ongoing",
+  "On hold",
+  "Planned",
+  "Dropped",
+] as const;
 
 type Props = {
   value: MapStatusEnum;
