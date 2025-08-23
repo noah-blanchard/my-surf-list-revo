@@ -31,7 +31,7 @@ export function StatusAccordion({
               {s.items.length ? (
                 s.items.map((m) => (
                   <MapListRow
-                    time={m.completion_data.time}
+                    time={m.completion_data?.time}
                     key={m.id}
                     name={m.name}
                     tier={m.tier}
