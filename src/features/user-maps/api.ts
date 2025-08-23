@@ -1,6 +1,7 @@
 import { EditUserMapEntryPayload, EditUserMapEntryResponseSchema } from "@/app/api/user-maps/edit-entry/schemas";
-import { AddMapSelfBody, GetByStatusResponse, AddMapAdminBody, AddMapResponse } from "./validators";
+import { AddMapSelfBody, AddMapAdminBody, AddMapResponse } from "./validators";
 import { GetUserMapPayload, GetUserMapResponseSchema } from "@/app/api/user-maps/get/[mapId]/schema";
+import { GetByStatusResponseSchema } from "@/app/api/user-maps/getByStatus/schema";
 
 export async function fetchUserMapsByStatus(userId: string, opts?: { signal?: AbortSignal }) {
   const res = await fetch(`/api/user-maps/getByStatus?user_id=${encodeURIComponent(userId)}`, {
@@ -8,8 +9,11 @@ export async function fetchUserMapsByStatus(userId: string, opts?: { signal?: Ab
     headers: { Accept: "application/json" },
     signal: opts?.signal,
   });
+
   const json = await res.json();
-  const parsed = GetByStatusResponse.safeParse(json);
+
+
+  const parsed = GetByStatusResponseSchema.safeParse(json);
   if (!parsed.success) throw new Error("Invalid API response");
   return parsed.data;
 }

@@ -2,19 +2,24 @@
 "use client";
 import { Accordion, Paper, Text, Button } from "@mantine/core";
 import { MapListRow } from "./MapListRow";
-import { Map } from "@/features/maps/schemas";
+import { MapWithCompletion } from "@/features/maps/schemas";
 import { IconEdit } from "@tabler/icons-react";
 
 export function StatusAccordion({
   sections,
   defaultValue,
   highlight,
-  onEdit,                     // <- NEW
+  onEdit, // <- NEW
 }: {
-  sections: { key: string; title: string; items: Map[]; emptyHint?: string }[];
+  sections: {
+    key: string;
+    title: string;
+    items: MapWithCompletion[];
+    emptyHint?: string;
+  }[];
   defaultValue?: string[];
   highlight: string;
-  onEdit: (item: Map) => void;   // <- NEW
+  onEdit: (item: MapWithCompletion) => void; // <- NEW
 }) {
   return (
     <Paper withBorder radius="md" p="sm">
@@ -26,6 +31,7 @@ export function StatusAccordion({
               {s.items.length ? (
                 s.items.map((m) => (
                   <MapListRow
+                    time={m.completion_data.time}
                     key={m.id}
                     name={m.name}
                     tier={m.tier}
@@ -34,12 +40,10 @@ export function StatusAccordion({
                     right={
                       <Button
                         size="xs"
-                        variant="default"
+                        variant="subtle"
                         onClick={() => onEdit(m)}
                         rightSection={<IconEdit size={16} />}
-                      >
-                        Edit
-                      </Button>
+                      />
                     }
                   />
                 ))

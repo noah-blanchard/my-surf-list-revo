@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -131,35 +131,53 @@ export type Database = {
         Row: {
           bonuses_completed: number[]
           completed_at: string | null
+          count: number | null
           created_at: string
+          date: string | null
           id: number
           map_id: number
+          points: number | null
+          rank: string | null
           stages_completed: number[]
           status: Database["public"]["Enums"]["map_status"]
+          time: number | null
           updated_at: string
           user_id: string
+          wrDiff: number | null
         }
         Insert: {
           bonuses_completed?: number[]
           completed_at?: string | null
+          count?: number | null
           created_at?: string
+          date?: string | null
           id?: number
           map_id: number
+          points?: number | null
+          rank?: string | null
           stages_completed?: number[]
           status?: Database["public"]["Enums"]["map_status"]
+          time?: number | null
           updated_at?: string
           user_id: string
+          wrDiff?: number | null
         }
         Update: {
           bonuses_completed?: number[]
           completed_at?: string | null
+          count?: number | null
           created_at?: string
+          date?: string | null
           id?: number
           map_id?: number
+          points?: number | null
+          rank?: string | null
           stages_completed?: number[]
           status?: Database["public"]["Enums"]["map_status"]
+          time?: number | null
           updated_at?: string
           user_id?: string
+          wrDiff?: number | null
         }
         Relationships: [
           {

@@ -9,7 +9,7 @@ import { StatusAccordion } from "@/ui/components/list/StatusAccordion";
 import { SearchField } from "@/ui/components/inputs/SearchField";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { getUserMapsByStatusAction } from "../actions";
-import type { Map } from "@/features/maps/schemas";
+import type {  MapWithCompletion } from "@/features/maps/schemas";
 import { EditMapEntry } from "./EditMapEntry";
 
 export function MyListView({ userId }: { userId: string }) {
@@ -30,21 +30,21 @@ export function MyListView({ userId }: { userId: string }) {
 
   // --- sélection pour édition
   const [opened, { open, close }] = useDisclosure(false);
-  const [selectedMap, setSelectedMap] = React.useState<Map | null>(null);
+  const [selectedMap, setSelectedMap] = React.useState<MapWithCompletion | null>(null);
 
   const filtered = React.useMemo(() => {
     if (!data?.ok) return null;
     const match = (s: string) =>
       debounced ? s.toLowerCase().includes(debounced) : true;
-    const pick = (arr: Map[]) =>
+    const pick = (arr: MapWithCompletion[]) =>
       debounced ? arr.filter((m) => match(m.name)) : arr;
 
     const groups = {
-      Completed: pick(data.data.groups.Completed as Map[]),
-      Ongoing: pick(data.data.groups.Ongoing as Map[]),
-      "On hold": pick(data.data.groups["On hold"] as Map[]),
-      Planned: pick(data.data.groups.Planned as Map[]),
-      Dropped: pick(data.data.groups.Dropped as Map[]),
+      Completed: pick(data.data.groups.Completed as MapWithCompletion[]),
+      Ongoing: pick(data.data.groups.Ongoing as MapWithCompletion[]),
+      "On hold": pick(data.data.groups["On hold"] as MapWithCompletion[]),
+      Planned: pick(data.data.groups.Planned as MapWithCompletion[]),
+      Dropped: pick(data.data.groups.Dropped as MapWithCompletion[]),
     };
 
     const counts = {
@@ -59,8 +59,10 @@ export function MyListView({ userId }: { userId: string }) {
     return { groups, counts };
   }, [data, debounced]);
 
+  console.log("groups", filtered)
+
   // ouvrir le modal depuis une ligne
-  function handleEditClick(m: Map) {
+  function handleEditClick(m: MapWithCompletion) {
     setSelectedMap(m);
     open();
   }
@@ -138,11 +140,7 @@ export function MyListView({ userId }: { userId: string }) {
 
           {/* Modal d’édition réel (monté uniquement quand entry OK) */}
           {opened && selectedMap && (
-            <EditMapEntry
-              opened
-              onClose={close}
-              map={selectedMap}
-            />
+            <EditMapEntry opened onClose={close} map={selectedMap} />
           )}
         </Stack>
       )}

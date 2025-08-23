@@ -1,18 +1,22 @@
-import { NextRequest } from "next/server";
+// app/api/user-maps/getByStatus/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import { GetByStatusQuery, GetByStatusResponse } from "@/features/user-maps/validators";
-import { GetByStatusRawResponseSchema } from "./schema";
-import { Map } from "@/features/maps/schemas";
-import { UserMap } from "@/features/user-maps/schemas";
+import { GetByStatusQuery } from "@/features/user-maps/validators";
+import type { UserMap } from "@/features/user-maps/schemas";
+import type { MapWithCompletion } from "@/features/maps/schemas";
+import { GetByStatusResponseSchema } from "./schema";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const parsed = GetByStatusQuery.safeParse({ user_id: url.searchParams.get("user_id") ?? "" });
+  const parsed = GetByStatusQuery.safeParse({
+    user_id: url.searchParams.get("user_id") ?? "",
+  });
   if (!parsed.success) {
-    return new Response(JSON.stringify({ ok: false, message: "Invalid user_id" }), {
-      status: 400, headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ ok: false as const, message: "Invalid user_id" }, { status: 400 });
   }
   const { user_id } = parsed.data;
 
@@ -21,34 +25,22 @@ export async function GET(req: NextRequest) {
   // Auth
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) {
-    return new Response(JSON.stringify({ ok: false, message: "Unauthorized" }), {
-      status: 401, headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ ok: false as const, message: "Unauthorized" }, { status: 401 });
   }
 
-  // Jointure 1→1 : map_id → maps.id
-  // On FORCE le type avec `.returns<UMSelect[]>()` pour éviter l’array fantôme.
+  // On part de user_maps (on veut la completion) + map jointe
   const { data, error } = await supabase
     .from("user_maps")
     .select("*, maps:map_id(*)")
     .eq("user_id", user_id)
-    .order("updated_at", { ascending: false })
+    .order("updated_at", { ascending: false });
 
   if (error) {
-    return new Response(JSON.stringify({ ok: false, message: error.message }), {
-      status: 500, headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ ok: false as const, message: error.message }, { status: 500 });
   }
 
-  const safeRawData = GetByStatusRawResponseSchema.safeParse(data);
-  if (!safeRawData.success) {
-    return new Response(JSON.stringify({ ok: false, message: "Invalid response shape" }), {
-      status: 500, headers: { "Content-Type": "application/json" },
-    });
-  }
-
-
-  const groups: Record<UserMap["status"], Map[]> = {
+  // Record<status, MapWithCompletion[]>
+  const groups: Record<UserMap["status"], MapWithCompletion[]> = {
     Completed: [],
     Ongoing: [],
     "On hold": [],
@@ -60,9 +52,25 @@ export async function GET(req: NextRequest) {
     const m = Array.isArray(row.maps) ? row.maps[0] : row.maps;
     if (!m) continue;
 
-    const item: Map = m;
+    const completion_data = {
+      id: row.id,
+      user_id: row.user_id,
+      map_id: row.map_id,
+      status: row.status,
+      bonuses_completed: row.bonuses_completed ?? [],
+      stages_completed: row.stages_completed ?? [],
+      completed_at: row.completed_at,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      time: row.time ?? null,
+      wrDiff: row.wrDiff ?? null,
+      date: row.date ?? null,
+      points: row.points ?? null,
+      count: row.count ?? null,
+      rank: row.rank ?? null,
+    };
 
-    groups[row.status]?.push(item);
+    groups[row.status]?.push({ ...m, completion_data } as MapWithCompletion);
   }
 
   const counts = {
@@ -74,10 +82,14 @@ export async function GET(req: NextRequest) {
     total: (data ?? []).length,
   };
 
-  const payload = { ok: true, counts, groups };
-  const safe = GetByStatusResponse.parse(payload); // defensive
-  return new Response(JSON.stringify(safe), {
+  const payload = { ok: true as const, counts, groups };
+  const safe = GetByStatusResponseSchema.safeParse(payload);
+  if (!safe.success) {
+    return NextResponse.json({ ok: false as const, message: "Bad response" }, { status: 500 });
+  }
+
+  return NextResponse.json(safe.data, {
     status: 200,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: { "Cache-Control": "no-store" },
   });
 }

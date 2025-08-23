@@ -20,19 +20,19 @@ export function EditMapEntry({ opened, onClose, map }: EditMapEntryProps) {
     queryFn: () => getUserMapEntryAction({ mapId: map.id }),
   });
 
-  console.log("EditMapEntry data", data);
-
   const entry = useMemo(() => {
     if (!data?.ok) return null;
     return data?.data?.user_map as UserMap;
   }, [data]);
 
-  const [status, setStatus] = useState<MapStatusEnum>(entry?.status ?? MapStatusEnum.Planned);
-  const [bonuses, setBonuses] = useState<number[]>(entry?.bonuses_completed ?? []);
+  const [status, setStatus] = useState<MapStatusEnum>(
+    entry?.status ?? MapStatusEnum.Planned
+  );
+  const [bonuses, setBonuses] = useState<number[]>(
+    entry?.bonuses_completed ?? []
+  );
   const [stages, setStages] = useState<number[]>(entry?.stages_completed ?? []);
   const [deleting, setDeleting] = useState(false);
-
-  console.log("entry", entry);
 
   useEffect(() => {
     setStatus(entry?.status ?? MapStatusEnum.Planned);
@@ -125,11 +125,7 @@ export function EditMapEntry({ opened, onClose, map }: EditMapEntryProps) {
 
   const handleSubmit = useCallback(async () => {
     // If nothing to update, just close silently
-    const {
-      status: s,
-      bonuses_completed: b,
-      stages_completed: st,
-    } = payload;
+    const { status: s, bonuses_completed: b, stages_completed: st } = payload;
     if (s === undefined && b === undefined && st === undefined) {
       onClose();
       return;
@@ -139,11 +135,7 @@ export function EditMapEntry({ opened, onClose, map }: EditMapEntryProps) {
     if (!res.ok) throw new Error(res.message);
 
     onClose();
-  }, [
-    payload,
-    mutateAsync,
-    onClose,
-  ]);
+  }, [payload, mutateAsync, onClose]);
 
   return (
     <EditMapEntryModal
