@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { GlowSection as Section } from "@/ui/components/section/GlowSection";
-import { ResultsGrid, ResultsGridSkeleton } from "@/ui/components/grid/ResultGrid";
+import {
+  ResultsGrid,
+  ResultsGridSkeleton,
+} from "@/ui/components/grid/ResultGrid";
 import { MapCard } from "@/ui/components/card/MapCard";
 import { FiltersBar } from "@/ui/components/filters/FiltersBar";
 import { PaginationBar } from "@/ui/components/pagination/PaginationBar";
@@ -10,10 +13,15 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { Alert, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPlannedAction, addOngoingAction, addCompletedAction } from "@/features/user-maps/actions";
+import {
+  addPlannedAction,
+  addOngoingAction,
+  addCompletedAction,
+} from "@/features/user-maps/actions";
 import { searchMapsAction } from "../actions";
 import type { SearchMapsPayload } from "@/app/api/maps/search/schemas";
-import { Map } from "../schemas";
+import { MapWithCompletion } from "../schemas";
+import { CompletionFilterType } from "@/ui/components/filters/CompletionToggle";
 
 export default function SearchMapsView() {
   const [page, setPage] = React.useState(1);
@@ -22,9 +30,14 @@ export default function SearchMapsView() {
   const [q, setQ] = React.useState("");
   const [debouncedQ] = useDebouncedValue(q, 300);
 
+  const [completion, setCompletion] =
+    React.useState<CompletionFilterType>("all");
+
   const [tier, setTier] = React.useState<number | null>(null);
   const [type, setType] = React.useState<"all" | "linear" | "staged">("all");
-  const [sort, setSort] = React.useState<"created" | "alpha" | "tier">("created");
+  const [sort, setSort] = React.useState<"created" | "alpha" | "tier">(
+    "created"
+  );
   const [dir, setDir] = React.useState<"asc" | "desc">("desc");
 
   // reset page quand les filtres changent
@@ -43,8 +56,9 @@ export default function SearchMapsView() {
       isLinear: type === "all" ? undefined : type === "linear",
       sort,
       dir,
+      completion,
     };
-  }, [page, pageSize, debouncedQ, tier, type, sort, dir]);
+  }, [page, pageSize, debouncedQ, tier, type, sort, dir, completion]);
 
   const { data, isError, error, isLoading, isFetching } = useQuery({
     queryKey: ["api", "maps", "list", payload],
@@ -56,11 +70,15 @@ export default function SearchMapsView() {
     staleTime: 30_000,
   });
 
+  console.log("data", data);
+
   const showSkeletons = isLoading || (!data && isFetching);
 
   const queryClient = useQueryClient();
   const invalidateLists = () =>
-    queryClient.invalidateQueries({ queryKey: ["api", "user-maps"] }).catch(() => {});
+    queryClient
+      .invalidateQueries({ queryKey: ["api", "user-maps"] })
+      .catch(() => {});
 
   const plannedMut = useMutation({
     mutationFn: (mapId: number) => addPlannedAction(mapId),
@@ -74,6 +92,35 @@ export default function SearchMapsView() {
     mutationFn: (mapId: number) => addCompletedAction(mapId),
     onSuccess: (r) => r.ok && invalidateLists(),
   });
+
+  // const filteredData = React.useMemo(() => {
+  //   const list = data?.items ?? [];
+
+  //   // on normalise: completion_data toujours présent (null si absent)
+  //   const normalized: MapWithCompletion[] = list.map((m) => ({
+  //     ...m,
+  //     completion_data: m.completion_data ?? null,
+  //   }));
+
+  //   switch (completion) {
+  //     case "complete":
+  //       return normalized.filter(
+  //         (m) => m.completion_data?.status === "Completed"
+  //       );
+
+  //     case "incomplete":
+  //       return normalized.filter(
+  //         (m) => m.completion_data !== null && m.completion_data?.status !== "Completed"
+  //       );
+
+  //     case "unplayed":
+  //       return normalized.filter((m) => m.completion_data === null);
+
+  //     case "all":
+  //     default:
+  //       return normalized;
+  //   }
+  // }, [data, completion]);
 
   return (
     <Stack gap="md">
@@ -89,6 +136,8 @@ export default function SearchMapsView() {
           dir={dir}
           onSort={setSort}
           onDir={setDir}
+          completion={completion}
+          onCompletion={setCompletion}
         />
       </Section>
 
@@ -104,16 +153,28 @@ export default function SearchMapsView() {
         ) : data?.items?.length ? (
           <>
             <ResultsGrid>
-              {data.items.map((m: Map) => (
-                <MapCard
-                  loading={plannedMut.isPending || ongoingMut.isPending || completedMut.isPending}
-                  key={m.id}
-                  item={m}
-                  onAddPlanned={(map) => plannedMut.mutate(Number(map.id))}
-                  onAddOngoing={(map) => ongoingMut.mutate(Number(map.id))}
-                  onAddCompleted={(map) => completedMut.mutate(Number(map.id))}
-                />
-              ))}
+              {data?.items?.map((m) => {
+                const item: MapWithCompletion = {
+                  ...m,
+                  completion_data: m.completion_data ?? null,
+                };
+                return (
+                  <MapCard
+                    key={item.id}
+                    item={item}
+                    loading={
+                      plannedMut.isPending ||
+                      ongoingMut.isPending ||
+                      completedMut.isPending
+                    }
+                    onAddPlanned={(map) => plannedMut.mutate(Number(map.id))}
+                    onAddOngoing={(map) => ongoingMut.mutate(Number(map.id))}
+                    onAddCompleted={(map) =>
+                      completedMut.mutate(Number(map.id))
+                    }
+                  />
+                );
+              })}
             </ResultsGrid>
 
             <div style={{ height: 12 }} />

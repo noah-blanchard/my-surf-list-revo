@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { MapSchema, MapStatusEnum } from "../maps/schemas";
+import { MapSchema, MapStatusSchema } from "../maps/schemas";
 
 export const UserMapSchema = z.object({
   id: z.number().int().nonnegative(),
   user_id: z.uuid(),
   map_id: z.number().int().nonnegative(),
 
-  status: z.enum(MapStatusEnum),
+  status: MapStatusSchema,
 
   // Arrays garantis non-nuls en DB (defaults à {}), on encode > 0 côté app
   bonuses_completed: z.array(z.number().int().positive()).default([]),

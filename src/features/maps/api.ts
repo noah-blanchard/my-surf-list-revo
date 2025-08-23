@@ -29,6 +29,8 @@ export async function fetchSearchMaps(
   if (payload.sort) qs.set("sort", payload.sort);
   if (payload.dir) qs.set("dir", payload.dir);
 
+  if(payload.completion) qs.set("completion", payload.completion)
+
   const resp = await fetch(`/api/maps/search?${qs.toString()}`, {
     method: "GET",
     cache: "no-store",

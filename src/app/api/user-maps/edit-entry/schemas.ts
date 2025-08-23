@@ -1,10 +1,10 @@
-import { MapStatusEnum } from "@/features/maps/schemas";
+import { MapStatusSchema } from "@/features/maps/schemas";
 import { UserMapSchema } from "@/features/user-maps/schemas";
 import { z } from "zod";
 
 export const EditUserMapEntryParamsSchema = z.object({
     id: z.number().int().positive(),
-    status: z.enum(MapStatusEnum).optional(),
+    status: MapStatusSchema.optional(),
     bonuses_completed: z.array(z.number().int().positive()).optional(),
     stages_completed: z.array(z.number().int().positive()).optional(),
     completed_at: z.iso.datetime({ offset: true }).nullable().optional(),

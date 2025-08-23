@@ -4,13 +4,18 @@ import { z } from "zod";
 export type MapRow = Database["public"]["Tables"]["maps"]["Row"];
 export type MapStatus = Database["public"]["Enums"]["map_status"];
 
-export enum MapStatusEnum {
-    Planned = "Planned",
-    OnHold = "On hold",
-    Dropped = "Dropped",
-    Completed = "Completed",
-    Ongoing = "Ongoing",
-}
+
+
+export const MAP_STATUS = [
+  "Planned",
+  "On hold",
+  "Dropped",
+  "Completed",
+  "Ongoing",
+] as const;
+
+export const MapStatusSchema = z.enum(MAP_STATUS);
+export type MapStatusEnum = z.infer<typeof MapStatusSchema>
 
 
 // ----- Map “pure” (inchangé)
@@ -37,7 +42,7 @@ export const UserMapCompletionSchema = z.object({
     user_id: z.uuid(),
     map_id: z.number().int().nonnegative(),
 
-    status: z.enum(MapStatusEnum),
+    status: MapStatusSchema,
 
     bonuses_completed: z.array(z.number().int().positive()).default([]),
     stages_completed: z.array(z.number().int().positive()).default([]),
@@ -58,7 +63,7 @@ export type UserMapCompletion = z.infer<typeof UserMapCompletionSchema>;
 
 // ----- Map + completion
 export const MapWithCompletionSchema = MapSchema.extend({
-    completion_data: UserMapCompletionSchema,
+    completion_data: UserMapCompletionSchema.nullable(),
 }).strict();
 export type MapWithCompletion = z.infer<typeof MapWithCompletionSchema>;
 
