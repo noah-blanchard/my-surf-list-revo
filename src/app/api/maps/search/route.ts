@@ -1,10 +1,11 @@
-// .../route.ts
+// src/app/api/maps/search/route.ts
 import { NextResponse } from "next/server";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { SearchMapsParamsSchema } from "./schemas";
 import type { UserMap } from "@/features/user-maps/schemas";
 import type { MapWithCompletion } from "@/features/maps/schemas";
 
+// Optionnel mais conseillé si tu utilises des cookies/sessions côté serveur
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
       isLinear,
       sort,
       dir,
-      completion, // NEW
+      completion, // "all" | "complete" | "incomplete" | "unplayed"
     } = parsed.data;
 
     const from = (page - 1) * pageSize;
@@ -46,18 +47,19 @@ export async function GET(req: Request) {
 
     const supabase = await createServerSupabase();
 
-    // On récupère l'utilisateur AVANT de construire la requête maps (pour appliquer le filtre)
+    // Récup user pour pouvoir filtrer par completion
     const {
       data: { user },
       error: userErr,
     } = await supabase.auth.getUser();
 
-    // Prépare les sets d'ids nécessaires pour filtrer
+    // Pré-calcul des sets d'IDs utiles au filtrage
     let completedIds: number[] = [];
+    let incompleteIds: number[] = [];
     let anyIds: number[] = [];
 
     if (!userErr && user && completion !== "all") {
-      // Une seule requête pour récupérer map_id + status
+      // Récup toutes les entrées user_maps de l'utilisateur (map_id + status suffisent)
       const { data: userMaps, error: umFilterErr } = await supabase
         .from("user_maps")
         .select("map_id,status")
@@ -65,22 +67,26 @@ export async function GET(req: Request) {
 
       if (!umFilterErr && userMaps) {
         anyIds = userMaps.map((r) => r.map_id);
-        completedIds = userMaps.filter((r) => r.status === "Completed").map((r) => r.map_id);
+        completedIds = userMaps
+          .filter((r) => r.status === "Completed")
+          .map((r) => r.map_id);
+        // "incomplete" = il existe une entrée mais != Completed
+        incompleteIds = userMaps
+          .filter((r) => r.status !== "Completed")
+          .map((r) => r.map_id);
       }
     }
 
-    // 1) Récup maps paginées + count avec TOUS les filtres (y compris completion)
+    // 1) Requête maps avec filtres + completion (pour un count correct)
     let query = supabase.from("maps").select("*", { count: "exact", head: false });
 
     if (q) query = query.ilike("name", `%${q}%`);
     if (typeof tier === "number") query = query.eq("tier", tier);
     if (typeof isLinear === "boolean") query = query.eq("is_linear", isLinear);
 
-    // Filtrage completion côté SQL pour que le count soit correct
     if (!userErr && user) {
       if (completion === "complete") {
         if (completedIds.length === 0) {
-          // aucun résultat direct
           return NextResponse.json(
             {
               ok: true,
@@ -99,22 +105,36 @@ export async function GET(req: Request) {
         }
         query = query.in("id", completedIds);
       } else if (completion === "incomplete") {
-        // "tout sauf Completed" => NOT IN completedIds (inclut unplayed)
-        if (completedIds.length > 0) {
-          query = query.not("id", "in", `(${completedIds.join(",")})`);
+        // maps AVEC entrée user_maps et status != Completed (donc pas "unplayed")
+        if (incompleteIds.length === 0) {
+          return NextResponse.json(
+            {
+              ok: true,
+              data: {
+                items: [],
+                page,
+                pageSize,
+                total: 0,
+                pageCount: 1,
+                hasPrev: false,
+                hasNext: false,
+              },
+            },
+            { status: 200, headers: { "Cache-Control": "no-store" } }
+          );
         }
-        // si aucun completed, pas besoin de filtre: tout est "incomplete"
+        query = query.in("id", incompleteIds);
       } else if (completion === "unplayed") {
-        // sans entrée user_maps
+        // maps SANS entrée user_maps
         if (anyIds.length > 0) {
+          // Supabase not('in') attend une string "(1,2,3)"; on la construit seulement si non vide
           query = query.not("id", "in", `(${anyIds.join(",")})`);
         }
-        // si aucune entrée user_maps, tout est "unplayed" => pas de filtre
+        // si aucune entrée user_maps, tout est "unplayed" → pas de filtre
       }
     } else {
-      // pas d'utilisateur connecté
-      if (completion === "complete") {
-        // pas de user => aucune map "complete"
+      // Pas d'utilisateur connecté → on ne peut pas savoir "complete"/"incomplete"
+      if (completion === "complete" || completion === "incomplete") {
         return NextResponse.json(
           {
             ok: true,
@@ -131,7 +151,7 @@ export async function GET(req: Request) {
           { status: 200, headers: { "Cache-Control": "no-store" } }
         );
       }
-      // "incomplete" et "unplayed" => on renvoie tout (pas d'entrée user_maps)
+      // "unplayed" / "all" → pas de filtre
     }
 
     const sortCol = sort === "alpha" ? "name" : sort === "tier" ? "tier" : "created_at";
