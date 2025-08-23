@@ -70,7 +70,6 @@ export default function SearchMapsView() {
     staleTime: 30_000,
   });
 
-  console.log("data", data);
 
   const showSkeletons = isLoading || (!data && isFetching);
 

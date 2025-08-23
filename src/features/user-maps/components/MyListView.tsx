@@ -9,7 +9,7 @@ import { StatusAccordion } from "@/ui/components/list/StatusAccordion";
 import { SearchField } from "@/ui/components/inputs/SearchField";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { getUserMapsByStatusAction } from "../actions";
-import type {  MapWithCompletion } from "@/features/maps/schemas";
+import type { MapWithCompletion } from "@/features/maps/schemas";
 import { EditMapEntry } from "./EditMapEntry";
 
 export function MyListView({ userId }: { userId: string }) {
@@ -30,7 +30,8 @@ export function MyListView({ userId }: { userId: string }) {
 
   // --- sélection pour édition
   const [opened, { open, close }] = useDisclosure(false);
-  const [selectedMap, setSelectedMap] = React.useState<MapWithCompletion | null>(null);
+  const [selectedMap, setSelectedMap] =
+    React.useState<MapWithCompletion | null>(null);
 
   const filtered = React.useMemo(() => {
     if (!data?.ok) return null;
@@ -58,8 +59,6 @@ export function MyListView({ userId }: { userId: string }) {
 
     return { groups, counts };
   }, [data, debounced]);
-
-  console.log("groups", filtered)
 
   // ouvrir le modal depuis une ligne
   function handleEditClick(m: MapWithCompletion) {
