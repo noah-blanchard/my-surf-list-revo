@@ -26,7 +26,7 @@ export function EditMapEntry({ opened, onClose, map }: EditMapEntryProps) {
   }, [data]);
 
   const [status, setStatus] = useState<MapStatusEnum>(
-    entry?.status ?? MapStatusEnum.Planned
+    entry?.status ?? "Planned"
   );
   const [bonuses, setBonuses] = useState<number[]>(
     entry?.bonuses_completed ?? []
@@ -35,7 +35,7 @@ export function EditMapEntry({ opened, onClose, map }: EditMapEntryProps) {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setStatus(entry?.status ?? MapStatusEnum.Planned);
+    setStatus(entry?.status ?? "Planned");
     setBonuses(entry?.bonuses_completed ?? []);
     setStages(entry?.stages_completed ?? []);
   }, [
